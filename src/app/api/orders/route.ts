@@ -50,5 +50,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
+  // Firing food to the kitchen moves the tab forward in its lifecycle
+  // (e.g. a dessert order fired while EATING bumps it back to ORDERED).
+  await admin
+    .from("tabs")
+    .update({ status: "ordered" })
+    .eq("id", tabId)
+    .in("status", ["seated", "ordered", "eating", "needs_payment"]);
+
   return NextResponse.json({ id: order.id });
 }

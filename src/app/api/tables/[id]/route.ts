@@ -17,6 +17,15 @@ export async function PATCH(
   if (typeof body.seats === "number") update.seats = body.seats;
   if (typeof body.posX === "number") update.pos_x = body.posX;
   if (typeof body.posY === "number") update.pos_y = body.posY;
+  if (typeof body.width === "number") update.width = body.width;
+  if (typeof body.height === "number") update.height = body.height;
+  if (typeof body.floorId === "string") update.floor_id = body.floorId;
+  if (typeof body.shape === "string") {
+    if (!["square", "round", "rectangle"].includes(body.shape)) {
+      return NextResponse.json({ error: "Invalid shape" }, { status: 400 });
+    }
+    update.shape = body.shape;
+  }
 
   const admin = supabaseAdmin();
   const { error } = await admin.from("restaurant_tables").update(update).eq("id", id);

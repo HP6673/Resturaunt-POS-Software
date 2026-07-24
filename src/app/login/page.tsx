@@ -52,46 +52,46 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-4 text-neutral-100">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 text-slate-900">
       <h1 className="mb-1 text-2xl font-semibold">Restaurant POS</h1>
-      <p className="mb-8 text-sm text-neutral-400">Enter your staff PIN</p>
+      <p className="mb-8 text-sm text-slate-500">Enter your staff PIN</p>
 
-      <div className="mb-6 flex h-14 w-56 items-center justify-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900">
+      <div className="mb-6 flex h-14 w-56 items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white shadow-sm">
         {Array.from({ length: 6 }).map((_, i) => (
           <span
             key={i}
-            className={`h-3 w-3 rounded-full ${i < pin.length ? "bg-emerald-500" : "bg-neutral-700"}`}
+            className={`h-3 w-3 rounded-full ${i < pin.length ? "bg-blue-600" : "bg-slate-200"}`}
           />
         ))}
       </div>
 
-      {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       <div className="grid grid-cols-3 gap-3">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
           <button
             key={d}
             onClick={() => press(d)}
-            className="h-16 w-16 rounded-xl bg-neutral-800 text-xl font-medium hover:bg-neutral-700 active:bg-neutral-600"
+            className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 active:bg-slate-200"
           >
             {d}
           </button>
         ))}
         <button
           onClick={clear}
-          className="h-16 w-16 rounded-xl bg-neutral-900 text-sm text-neutral-400 hover:bg-neutral-800"
+          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100"
         >
           Clear
         </button>
         <button
           onClick={() => press("0")}
-          className="h-16 w-16 rounded-xl bg-neutral-800 text-xl font-medium hover:bg-neutral-700 active:bg-neutral-600"
+          className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 active:bg-slate-200"
         >
           0
         </button>
         <button
           onClick={backspace}
-          className="h-16 w-16 rounded-xl bg-neutral-900 text-sm text-neutral-400 hover:bg-neutral-800"
+          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100"
         >
           ⌫
         </button>
@@ -100,7 +100,7 @@ function LoginForm() {
       <button
         disabled={pin.length === 0 || loading}
         onClick={() => submit(pin)}
-        className="mt-8 w-56 rounded-lg bg-emerald-600 py-3 font-medium disabled:opacity-40"
+        className="mt-8 w-56 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-40"
       >
         {loading ? "Checking..." : "Log in"}
       </button>

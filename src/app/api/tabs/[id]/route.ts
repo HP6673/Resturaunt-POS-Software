@@ -12,7 +12,7 @@ export async function PATCH(
   const { id } = await params;
   const { status } = await request.json();
 
-  if (!["open", "needs_payment"].includes(status)) {
+  if (!["seated", "ordered", "eating", "needs_payment"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 

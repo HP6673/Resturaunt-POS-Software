@@ -99,13 +99,13 @@ export function MenuAdmin({
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-xl font-semibold">Menu management</h1>
+        <h1 className="mb-6 text-xl font-semibold text-slate-900">Menu management</h1>
 
-        <section className="mb-8 rounded-xl border border-neutral-800 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase text-neutral-500">Categories</h2>
+        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Categories</h2>
           <div className="mb-3 flex flex-wrap gap-2">
             {categories.map((c) => (
-              <span key={c.id} className="rounded-full bg-neutral-800 px-3 py-1 text-sm">
+              <span key={c.id} className="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700">
                 {c.name}
               </span>
             ))}
@@ -115,44 +115,44 @@ export function MenuAdmin({
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               placeholder="New category name"
-              className="flex-1 rounded-lg bg-neutral-900 px-3 py-2 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600"
+              className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             />
             <button
               onClick={addCategory}
               disabled={savingCategory}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium disabled:opacity-40"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
             >
               Add
             </button>
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-neutral-800 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase text-neutral-500">Add menu item</h2>
+        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Add menu item</h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <input
               value={newItem.name}
               onChange={(e) => setNewItem((s) => ({ ...s, name: e.target.value }))}
               placeholder="Name"
-              className="col-span-2 rounded-lg bg-neutral-900 px-3 py-2 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600 sm:col-span-1"
+              className="col-span-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500 sm:col-span-1"
             />
             <input
               value={newItem.description}
               onChange={(e) => setNewItem((s) => ({ ...s, description: e.target.value }))}
               placeholder="Description"
-              className="col-span-2 rounded-lg bg-neutral-900 px-3 py-2 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600 sm:col-span-1"
+              className="col-span-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500 sm:col-span-1"
             />
             <input
               value={newItem.price}
               onChange={(e) => setNewItem((s) => ({ ...s, price: e.target.value }))}
               placeholder="Price"
               inputMode="decimal"
-              className="rounded-lg bg-neutral-900 px-3 py-2 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600"
+              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             />
             <select
               value={newItem.categoryId}
               onChange={(e) => setNewItem((s) => ({ ...s, categoryId: e.target.value }))}
-              className="rounded-lg bg-neutral-900 px-3 py-2 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600"
+              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             >
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -164,25 +164,25 @@ export function MenuAdmin({
           <button
             onClick={addItem}
             disabled={savingItem}
-            className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium disabled:opacity-40"
+            className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
           >
             Add item
           </button>
         </section>
 
         <section>
-          <h2 className="mb-3 text-sm font-medium uppercase text-neutral-500">Items</h2>
+          <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Items</h2>
           <div className="space-y-2">
             {items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-neutral-800 p-3"
+                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm"
               >
                 <div>
-                  <p className={`font-medium ${!item.is_available ? "text-neutral-500 line-through" : ""}`}>
+                  <p className={`font-medium ${!item.is_available ? "text-slate-400 line-through" : "text-slate-900"}`}>
                     {item.name}
                   </p>
-                  {item.description && <p className="text-xs text-neutral-500">{item.description}</p>}
+                  {item.description && <p className="text-xs text-slate-500">{item.description}</p>}
                 </div>
                 <div className="flex items-center gap-3">
                   <input
@@ -193,17 +193,17 @@ export function MenuAdmin({
                       const value = parseFloat(e.target.value);
                       if (!Number.isNaN(value) && value !== item.price) updatePrice(item, value);
                     }}
-                    className="w-20 rounded-lg bg-neutral-900 px-2 py-1 text-sm ring-1 ring-neutral-800 focus:outline-none focus:ring-emerald-600"
+                    className="w-20 rounded-lg bg-slate-50 px-2 py-1 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                   />
                   <button
                     onClick={() => toggleAvailable(item)}
                     className={`rounded-full px-3 py-1 text-xs ${
-                      item.is_available ? "bg-emerald-900/60 text-emerald-300" : "bg-neutral-800 text-neutral-400"
+                      item.is_available ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     {item.is_available ? "Available" : "Sold out"}
                   </button>
-                  <button onClick={() => deleteItem(item)} className="text-xs text-red-400 hover:text-red-300">
+                  <button onClick={() => deleteItem(item)} className="text-xs text-red-500 hover:text-red-600">
                     Delete
                   </button>
                 </div>

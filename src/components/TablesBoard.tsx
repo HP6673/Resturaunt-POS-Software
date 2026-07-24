@@ -4,22 +4,46 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { fetchOpenTabsSummary, type OpenTabSummary } from "@/lib/tabsSummary";
-import type { RestaurantTable } from "@/lib/types";
+import type { Floor, RestaurantTable, TabStatus } from "@/lib/types";
 
-const STATUS_STYLE: Record<string, string> = {
-  available: "bg-neutral-800 border-neutral-700 hover:bg-neutral-700",
-  open: "bg-emerald-900/60 border-emerald-600 hover:bg-emerald-900",
-  needs_payment: "bg-amber-900/60 border-amber-500 hover:bg-amber-900",
+const STATUS_STYLE: Record<"empty" | TabStatus, string> = {
+  empty: "bg-white border-slate-200 hover:bg-slate-50",
+  seated: "bg-sky-50 border-sky-400 hover:bg-sky-100",
+  ordered: "bg-amber-50 border-amber-400 hover:bg-amber-100",
+  eating: "bg-emerald-50 border-emerald-400 hover:bg-emerald-100",
+  needs_payment: "bg-rose-50 border-rose-400 hover:bg-rose-100",
+  closed: "bg-white border-slate-200 hover:bg-slate-50",
+};
+
+const STATUS_LABEL: Record<"empty" | TabStatus, string> = {
+  empty: "Empty",
+  seated: "Seated",
+  ordered: "Ordered",
+  eating: "Eating",
+  needs_payment: "Payment",
+  closed: "Empty",
+};
+
+const STATUS_DOT: Record<"empty" | TabStatus, string> = {
+  empty: "border-slate-200 bg-white",
+  seated: "border-sky-400 bg-sky-50",
+  ordered: "border-amber-400 bg-amber-50",
+  eating: "border-emerald-400 bg-emerald-50",
+  needs_payment: "border-rose-400 bg-rose-50",
+  closed: "border-slate-200 bg-white",
 };
 
 export function TablesBoard({
+  floors,
   tables,
   staffNames,
 }: {
+  floors: Floor[];
   tables: RestaurantTable[];
   staffNames: Record<string, string>;
 }) {
   const router = useRouter();
+  const [activeFloor, setActiveFloor] = useState<string>(floors[0]?.id ?? "");
   const [tabsByTable, setTabsByTable] = useState<Record<string, OpenTabSummary>>({});
   const [busyTableId, setBusyTableId] = useState<string | null>(null);
   const loadingRef = useRef(false);
@@ -73,44 +97,72 @@ export function TablesBoard({
     }
   }
 
+  const visibleTables = tables.filter((t) => t.floor_id === activeFloor);
+
   return (
     <div className="relative flex-1 overflow-auto p-6">
-      <div className="mb-4 flex gap-4 text-xs text-neutral-400">
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-neutral-700 bg-neutral-800" /> Available
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-emerald-600 bg-emerald-900/60" /> Open tab
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded border border-amber-500 bg-amber-900/60" /> Needs payment
-        </span>
+      {floors.length > 1 && (
+        <div className="mb-4 flex gap-1">
+          {floors.map((floor) => (
+            <button
+              key={floor.id}
+              onClick={() => setActiveFloor(floor.id)}
+              className={`rounded-full px-3 py-1.5 text-sm ${
+                activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {floor.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mb-4 flex flex-wrap gap-4 text-xs text-slate-500">
+        {(["empty", "seated", "ordered", "eating", "needs_payment"] as const).map((s) => (
+          <span key={s} className="flex items-center gap-1.5">
+            <span className={`h-3 w-3 rounded border ${STATUS_DOT[s]}`} /> {STATUS_LABEL[s]}
+          </span>
+        ))}
       </div>
-      <div className="relative h-[70vh] min-h-[500px] w-full rounded-xl border border-neutral-800 bg-neutral-900/40">
-        {tables.map((table) => {
+
+      <div className="relative h-[70vh] min-h-[500px] w-full rounded-xl border border-slate-200 bg-slate-100/50">
+        {visibleTables.map((table) => {
           const tab = tabsByTable[table.id];
-          const status = tab ? tab.status : "available";
+          const status = tab ? tab.status : "empty";
+          const radius = table.shape === "round" ? "9999px" : "0.5rem";
           return (
             <button
               key={table.id}
               onClick={() => handleClick(table)}
               disabled={busyTableId === table.id}
-              style={{ left: `${table.pos_x}%`, top: `${table.pos_y}%` }}
-              className={`absolute flex w-28 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-lg border p-3 text-sm shadow transition-colors disabled:opacity-50 ${STATUS_STYLE[status]}`}
+              style={{
+                left: `${table.pos_x}%`,
+                top: `${table.pos_y}%`,
+                width: `${table.width}px`,
+                height: `${table.height}px`,
+                borderRadius: radius,
+              }}
+              className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1 border p-2 text-sm shadow-sm transition-colors disabled:opacity-50 ${STATUS_STYLE[status]}`}
             >
-              <span className="text-base font-semibold">Table {table.label}</span>
-              <span className="text-xs text-neutral-400">{table.seats} seats</span>
+              <span className="text-base font-semibold text-slate-900">Table {table.label}</span>
+              <span className="text-xs text-slate-500">{table.seats} seats</span>
               {tab && (
                 <>
-                  <span className="text-sm font-medium text-neutral-100">${tab.total.toFixed(2)}</span>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                    {STATUS_LABEL[status]}
+                  </span>
+                  <span className="text-sm font-medium text-slate-900">${tab.total.toFixed(2)}</span>
                   {tab.server_id && (
-                    <span className="text-[10px] text-neutral-400">{staffNames[tab.server_id] ?? ""}</span>
+                    <span className="text-[10px] text-slate-500">{staffNames[tab.server_id] ?? ""}</span>
                   )}
                 </>
               )}
             </button>
           );
         })}
+        {visibleTables.length === 0 && (
+          <p className="p-6 text-sm text-slate-400">No tables on this floor yet.</p>
+        )}
       </div>
     </div>
   );

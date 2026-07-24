@@ -7,15 +7,28 @@ export interface Staff {
   active: boolean;
 }
 
+export type TableShape = "square" | "round" | "rectangle";
+
+export interface Floor {
+  id: string;
+  name: string;
+  sort_order: number;
+}
+
 export interface RestaurantTable {
   id: string;
+  floor_id: string;
   label: string;
   seats: number;
   pos_x: number;
   pos_y: number;
+  shape: TableShape;
+  width: number;
+  height: number;
 }
 
-export type TabStatus = "open" | "needs_payment" | "closed";
+// No tab row at all = "empty" table. Otherwise the tab moves through this lifecycle.
+export type TabStatus = "seated" | "ordered" | "eating" | "needs_payment" | "closed";
 export type PaymentMethod = "cash" | "card" | "other";
 
 export interface Tab {

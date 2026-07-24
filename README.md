@@ -44,12 +44,12 @@ writing RLS policies keyed off `auth.uid()`.
 2. In the project dashboard, open **SQL Editor → New query**, paste the
    contents of [`supabase/schema.sql`](supabase/schema.sql), and run it. This
    creates all tables, RLS policies, realtime publications, and seeds:
-   - 20 demo tables
+   - A "Main Floor" with 20 demo tables
    - 4 menu categories with 8 sample items
    - 3 demo staff logins (**change these PINs before real use**):
      | Role    | PIN  |
      |---------|------|
-     | admin   | 1234 |
+     | admin   | 0166 |
      | server  | 1111 |
      | kitchen | 2222 |
 3. In **Project Settings → API**, copy:
@@ -74,6 +74,10 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) — you'll land on the PIN
 pad. Log in with one of the demo PINs above.
 
+If you set up your Supabase project before floors/table-shape support was
+added, run [`supabase/migrations/0002_floors_shape_status.sql`](supabase/migrations/0002_floors_shape_status.sql)
+once in the SQL editor to bring an existing database up to date.
+
 ## Deploying for free (GitHub + Vercel)
 
 1. Push this repo to GitHub (already set up at
@@ -90,20 +94,28 @@ Every push to your main branch redeploys automatically.
 
 ## Using it
 
-- **Tables** (`/tables`) — floor plan of every table, color-coded: gray =
-  available, green = open tab, amber = needs payment. Tap a table to open its
-  ticket; tapping an empty table starts a new tab.
+- **Tables** (`/tables`) — floor plan per floor/room, color-coded by the
+  table's lifecycle state:
+  - **Empty** (white) — no open tab, tap to seat a new party
+  - **Seated** (blue) — tab opened, nothing fired to the kitchen yet
+  - **Ordered** (amber) — an order is in with the kitchen
+  - **Eating** (green) — food has been served
+  - **Payment** (rose) — checkout was opened, bill requested
+  - If there's more than one floor, tabs at the top switch between them.
 - **POS / ticket** (`/pos/[tabId]`) — browse the menu by category, tap items
-  to add them (adjust quantity, attach a note), then **Send to kitchen**.
-  **Checkout** closes the tab and records how the guest paid (cash/card/other)
-  — no real payment is processed in-app.
+  to add them (adjust quantity, attach a note), then **Send to kitchen**
+  (bumps the tab to Ordered). **Checkout** marks the tab Payment and opens the
+  close-out dialog — pick cash/card/other to close the tab (no real payment is
+  processed in-app).
 - **Kitchen** (`/kitchen`) — live queue of fired tickets, grouped by table,
   with an elapsed-time badge that turns red past 15 minutes. **Mark ready**
-  moves a ticket to the pickup column; **Served / clear** removes it.
+  moves a ticket to the pickup column; **Served / clear** marks it served,
+  which also bumps the table to Eating.
 - **Menu** (`/admin/menu`, admin only) — add categories/items, edit prices
   inline, toggle sold-out, delete items.
-- **Floor plan** (`/admin/tables`, admin only) — drag tables to match your
-  actual dining room; add or remove tables.
+- **Floor plan** (`/admin/tables`, admin only) — switch or add floors/rooms,
+  drag tables to reposition them, and click a table to edit its label, seat
+  count, shape (square/round/rectangle), and size in pixels.
 
 ## Project structure
 

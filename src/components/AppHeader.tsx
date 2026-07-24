@@ -24,9 +24,9 @@ export function AppHeader({ name, role }: { name: string; role: StaffRole }) {
   const links = NAV.filter((item) => item.roles.includes(role));
 
   return (
-    <header className="flex items-center justify-between border-b border-neutral-800 bg-neutral-950 px-4 py-3 text-neutral-100">
+    <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900">
       <div className="flex items-center gap-6">
-        <span className="font-semibold tracking-tight">Restaurant POS</span>
+        <span className="font-semibold tracking-tight text-blue-700">Restaurant POS</span>
         <nav className="flex gap-1">
           {links.map((item) => {
             const active = pathname.startsWith(item.href);
@@ -35,7 +35,7 @@ export function AppHeader({ name, role }: { name: string; role: StaffRole }) {
                 key={item.href}
                 href={item.href}
                 className={`rounded-md px-3 py-1.5 text-sm ${
-                  active ? "bg-neutral-800 text-white" : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+                  active ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 {item.label}
@@ -45,12 +45,12 @@ export function AppHeader({ name, role }: { name: string; role: StaffRole }) {
         </nav>
       </div>
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-neutral-400">
-          {name} · <span className="uppercase text-neutral-500">{role}</span>
+        <span className="text-slate-500">
+          {name} · <span className="uppercase text-slate-400">{role}</span>
         </span>
         <button
           onClick={logout}
-          className="rounded-md border border-neutral-800 px-3 py-1.5 text-neutral-300 hover:bg-neutral-900"
+          className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-600 hover:bg-slate-100"
         >
           Log out
         </button>

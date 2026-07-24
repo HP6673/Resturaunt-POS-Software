@@ -18,7 +18,12 @@ export async function PATCH(
 
   const admin = supabaseAdmin();
 
-  const { error: orderError } = await admin.from("orders").update({ status }).eq("id", id);
+  const { data: order, error: orderError } = await admin
+    .from("orders")
+    .update({ status })
+    .eq("id", id)
+    .select("tab_id")
+    .single();
   if (orderError) {
     return NextResponse.json({ error: orderError.message }, { status: 500 });
   }
@@ -32,6 +37,15 @@ export async function PATCH(
 
   if (itemsError) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
+  }
+
+  // Food hitting the table moves the tab into EATING.
+  if (status === "served" && order) {
+    await admin
+      .from("tabs")
+      .update({ status: "eating" })
+      .eq("id", order.tab_id)
+      .in("status", ["seated", "ordered"]);
   }
 
   return NextResponse.json({ ok: true });

@@ -24,10 +24,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  pending: "text-amber-400",
-  ready: "text-emerald-400",
-  served: "text-neutral-500",
-  cancelled: "text-neutral-600 line-through",
+  pending: "text-amber-600",
+  ready: "text-emerald-600",
+  served: "text-slate-400",
+  cancelled: "text-slate-400 line-through",
 };
 
 export function POSView({
@@ -137,6 +137,15 @@ export function POSView({
     }
   }
 
+  async function openCheckout() {
+    setShowCheckout(true);
+    await fetch(`/api/tabs/${tab.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "needs_payment" }),
+    });
+  }
+
   async function closeTab(paymentMethod: "cash" | "card" | "other") {
     setClosing(true);
     try {
@@ -154,11 +163,11 @@ export function POSView({
   return (
     <div className="flex flex-1 overflow-hidden">
       {/* Menu browser */}
-      <div className="flex flex-1 flex-col overflow-hidden border-r border-neutral-800">
-        <div className="flex gap-1 overflow-x-auto border-b border-neutral-800 p-3">
+      <div className="flex flex-1 flex-col overflow-hidden border-r border-slate-200">
+        <div className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-white text-neutral-900" : "bg-neutral-800 text-neutral-300"}`}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
           >
             All
           </button>
@@ -166,7 +175,7 @@ export function POSView({
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-white text-neutral-900" : "bg-neutral-800 text-neutral-300"}`}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
             >
               {c.name}
             </button>
@@ -177,39 +186,39 @@ export function POSView({
             <button
               key={item.id}
               onClick={() => addToCart(item)}
-              className="flex flex-col items-start gap-1 rounded-lg border border-neutral-800 bg-neutral-900 p-3 text-left hover:border-emerald-600 hover:bg-neutral-800"
+              className="flex flex-col items-start gap-1 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm hover:border-blue-400 hover:bg-blue-50"
             >
-              <span className="font-medium">{item.name}</span>
-              {item.description && <span className="text-xs text-neutral-500">{item.description}</span>}
-              <span className="mt-1 text-sm text-emerald-400">${item.price.toFixed(2)}</span>
+              <span className="font-medium text-slate-900">{item.name}</span>
+              {item.description && <span className="text-xs text-slate-500">{item.description}</span>}
+              <span className="mt-1 text-sm text-blue-600">${item.price.toFixed(2)}</span>
             </button>
           ))}
           {visibleItems.length === 0 && (
-            <p className="col-span-full text-sm text-neutral-500">No items in this category.</p>
+            <p className="col-span-full text-sm text-slate-500">No items in this category.</p>
           )}
         </div>
       </div>
 
       {/* Ticket / cart */}
-      <div className="flex w-96 shrink-0 flex-col overflow-hidden">
-        <div className="border-b border-neutral-800 p-4">
-          <h2 className="font-semibold">Table {table?.label ?? "?"}</h2>
-          <p className="text-xs text-neutral-500">{tab.guest_count} guests · Tab {tab.status.replace("_", " ")}</p>
+      <div className="flex w-96 shrink-0 flex-col overflow-hidden bg-white">
+        <div className="border-b border-slate-200 p-4">
+          <h2 className="font-semibold text-slate-900">Table {table?.label ?? "?"}</h2>
+          <p className="text-xs text-slate-500">{tab.guest_count} guests · Tab {tab.status.replace("_", " ")}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
           {orders.length > 0 && (
             <div className="mb-4 space-y-3">
-              <h3 className="text-xs font-medium uppercase text-neutral-500">Sent to kitchen</h3>
+              <h3 className="text-xs font-medium uppercase text-slate-500">Sent to kitchen</h3>
               {orders
                 .filter((o) => o.status !== "cancelled")
                 .map((order) => (
-                  <div key={order.id} className="rounded-lg border border-neutral-800 p-2 text-sm">
+                  <div key={order.id} className="rounded-lg border border-slate-200 p-2 text-sm">
                     {order.order_items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between py-0.5">
-                        <span>
+                        <span className="text-slate-900">
                           {item.quantity}x {item.name_snapshot}
-                          {item.note && <span className="text-neutral-500"> ({item.note})</span>}
+                          {item.note && <span className="text-slate-500"> ({item.note})</span>}
                         </span>
                         <span className={STATUS_COLOR[item.status]}>{STATUS_LABEL[item.status]}</span>
                       </div>
@@ -219,26 +228,26 @@ export function POSView({
             </div>
           )}
 
-          <h3 className="text-xs font-medium uppercase text-neutral-500">New items</h3>
-          {cart.length === 0 && <p className="mt-2 text-sm text-neutral-600">Tap menu items to add them.</p>}
+          <h3 className="text-xs font-medium uppercase text-slate-500">New items</h3>
+          {cart.length === 0 && <p className="mt-2 text-sm text-slate-400">Tap menu items to add them.</p>}
           <div className="mt-2 space-y-2">
             {cart.map((line) => (
-              <div key={line.key} className="rounded-lg border border-neutral-800 p-2">
+              <div key={line.key} className="rounded-lg border border-slate-200 p-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{line.name}</span>
-                  <span className="text-sm">${(line.price * line.quantity).toFixed(2)}</span>
+                  <span className="text-sm font-medium text-slate-900">{line.name}</span>
+                  <span className="text-sm text-slate-900">${(line.price * line.quantity).toFixed(2)}</span>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
                   <button
                     onClick={() => updateLine(line.key, { quantity: Math.max(1, line.quantity - 1) })}
-                    className="h-6 w-6 rounded bg-neutral-800 text-sm"
+                    className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
                   >
                     -
                   </button>
-                  <span className="w-4 text-center text-sm">{line.quantity}</span>
+                  <span className="w-4 text-center text-sm text-slate-900">{line.quantity}</span>
                   <button
                     onClick={() => updateLine(line.key, { quantity: line.quantity + 1 })}
-                    className="h-6 w-6 rounded bg-neutral-800 text-sm"
+                    className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
                   >
                     +
                   </button>
@@ -246,9 +255,9 @@ export function POSView({
                     value={line.note}
                     onChange={(e) => updateLine(line.key, { note: e.target.value })}
                     placeholder="note e.g. no onions"
-                    className="ml-1 flex-1 rounded bg-neutral-900 px-2 py-1 text-xs outline-none ring-1 ring-neutral-800 focus:ring-emerald-600"
+                    className="ml-1 flex-1 rounded bg-slate-50 px-2 py-1 text-xs text-slate-900 outline-none ring-1 ring-slate-200 focus:ring-blue-500"
                   />
-                  <button onClick={() => removeLine(line.key)} className="text-xs text-red-400">
+                  <button onClick={() => removeLine(line.key)} className="text-xs text-red-500 hover:text-red-600">
                     remove
                   </button>
                 </div>
@@ -257,18 +266,18 @@ export function POSView({
           </div>
         </div>
 
-        <div className="border-t border-neutral-800 p-4">
+        <div className="border-t border-slate-200 p-4">
           <div className="mb-3 flex justify-between text-sm">
-            <span className="text-neutral-400">Fired</span>
-            <span>${firedTotal.toFixed(2)}</span>
+            <span className="text-slate-500">Fired</span>
+            <span className="text-slate-900">${firedTotal.toFixed(2)}</span>
           </div>
           {cart.length > 0 && (
             <div className="mb-3 flex justify-between text-sm">
-              <span className="text-neutral-400">New</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span className="text-slate-500">New</span>
+              <span className="text-slate-900">${cartTotal.toFixed(2)}</span>
             </div>
           )}
-          <div className="mb-4 flex justify-between text-base font-semibold">
+          <div className="mb-4 flex justify-between text-base font-semibold text-slate-900">
             <span>Total</span>
             <span>${(firedTotal + cartTotal).toFixed(2)}</span>
           </div>
@@ -276,13 +285,13 @@ export function POSView({
           <button
             disabled={cart.length === 0 || sending}
             onClick={sendToKitchen}
-            className="mb-2 w-full rounded-lg bg-emerald-600 py-2.5 font-medium disabled:opacity-40"
+            className="mb-2 w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-40"
           >
             {sending ? "Sending..." : "Send to kitchen"}
           </button>
           <button
-            onClick={() => setShowCheckout(true)}
-            className="w-full rounded-lg border border-neutral-700 py-2.5 font-medium text-neutral-200 hover:bg-neutral-900"
+            onClick={openCheckout}
+            className="w-full rounded-lg border border-slate-300 py-2.5 font-medium text-slate-700 hover:bg-slate-50"
           >
             Checkout
           </button>
@@ -290,13 +299,13 @@ export function POSView({
       </div>
 
       {showCheckout && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-xl border border-neutral-800 bg-neutral-950 p-6">
-            <h3 className="mb-1 text-lg font-semibold">Close tab · Table {table?.label}</h3>
-            <p className="mb-4 text-sm text-neutral-500">
-              Total due: <span className="text-neutral-100">${firedTotal.toFixed(2)}</span>
+        <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 p-4">
+          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+            <h3 className="mb-1 text-lg font-semibold text-slate-900">Close tab · Table {table?.label}</h3>
+            <p className="mb-4 text-sm text-slate-500">
+              Total due: <span className="text-slate-900">${firedTotal.toFixed(2)}</span>
             </p>
-            <p className="mb-4 text-xs text-neutral-500">
+            <p className="mb-4 text-xs text-slate-500">
               This just records how the guest paid — no card is charged in-app.
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -305,7 +314,7 @@ export function POSView({
                   key={method}
                   disabled={closing}
                   onClick={() => closeTab(method)}
-                  className="rounded-lg border border-neutral-700 py-2 text-sm capitalize hover:bg-neutral-900 disabled:opacity-40"
+                  className="rounded-lg border border-slate-300 py-2 text-sm capitalize text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                 >
                   {method}
                 </button>
@@ -313,7 +322,7 @@ export function POSView({
             </div>
             <button
               onClick={() => setShowCheckout(false)}
-              className="mt-4 w-full text-center text-sm text-neutral-500 hover:text-neutral-300"
+              className="mt-4 w-full text-center text-sm text-slate-500 hover:text-slate-700"
             >
               Cancel
             </button>

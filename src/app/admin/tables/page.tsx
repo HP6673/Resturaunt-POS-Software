@@ -10,12 +10,15 @@ export default async function AdminTablesPage() {
   if (session.role !== "admin") redirect("/tables");
 
   const admin = supabaseAdmin();
-  const { data: tables } = await admin.from("restaurant_tables").select("*").order("label");
+  const [{ data: floors }, { data: tables }] = await Promise.all([
+    admin.from("floors").select("*").order("sort_order"),
+    admin.from("restaurant_tables").select("*").order("label"),
+  ]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-950 text-neutral-100">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <AppHeader name={session.name} role={session.role} />
-      <FloorPlanEditor initialTables={tables ?? []} />
+      <FloorPlanEditor initialFloors={floors ?? []} initialTables={tables ?? []} />
     </div>
   );
 }

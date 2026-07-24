@@ -13,21 +13,36 @@ create table if not exists staff (
   created_at timestamptz not null default now()
 );
 
+-- ============ FLOORS / ROOMS ============
+create table if not exists floors (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  sort_order int not null default 0
+);
+
 -- ============ FLOOR TABLES ============
 create table if not exists restaurant_tables (
   id uuid primary key default gen_random_uuid(),
+  floor_id uuid not null references floors(id) on delete cascade,
   label text not null,
   seats int not null default 4,
   pos_x real not null default 10, -- percentage (0-100) position on the floor plan
   pos_y real not null default 10,
+  shape text not null default 'square' check (shape in ('square', 'round', 'rectangle')),
+  width int not null default 96, -- pixels
+  height int not null default 96, -- pixels
   created_at timestamptz not null default now()
 );
 
+create index if not exists idx_restaurant_tables_floor_id on restaurant_tables(floor_id);
+
 -- ============ TABS (a seated party's running bill) ============
+-- No row = table is EMPTY. A tab's status then tracks it through the rest of the visit:
+--   seated -> ordered -> eating -> needs_payment -> closed (closed tabs no longer count as "open")
 create table if not exists tabs (
   id uuid primary key default gen_random_uuid(),
   table_id uuid not null references restaurant_tables(id) on delete cascade,
-  status text not null default 'open' check (status in ('open', 'needs_payment', 'closed')),
+  status text not null default 'seated' check (status in ('seated', 'ordered', 'eating', 'needs_payment', 'closed')),
   server_id uuid references staff(id) on delete set null,
   guest_count int not null default 1,
   opened_at timestamptz not null default now(),
@@ -100,6 +115,7 @@ group by t.id;
 -- data and nothing else. The `staff` table (holds PIN hashes) is never exposed to anon.
 
 alter table staff enable row level security;
+alter table floors enable row level security;
 alter table restaurant_tables enable row level security;
 alter table tabs enable row level security;
 alter table menu_categories enable row level security;
@@ -107,6 +123,7 @@ alter table menu_items enable row level security;
 alter table orders enable row level security;
 alter table order_items enable row level security;
 
+create policy "anon can read floors" on floors for select to anon using (true);
 create policy "anon can read tables" on restaurant_tables for select to anon using (true);
 create policy "anon can read tabs" on tabs for select to anon using (true);
 create policy "anon can read menu_categories" on menu_categories for select to anon using (true);
@@ -116,6 +133,7 @@ create policy "anon can read order_items" on order_items for select to anon usin
 -- No policies on `staff` for anon -> default deny (no reads, no writes).
 
 -- ============ REALTIME ============
+alter publication supabase_realtime add table floors;
 alter publication supabase_realtime add table tabs;
 alter publication supabase_realtime add table orders;
 alter publication supabase_realtime add table order_items;
@@ -124,19 +142,24 @@ alter publication supabase_realtime add table menu_items;
 
 -- ============ SEED DATA ============
 -- Demo staff PINs (change these after first login):
---   Admin  -> PIN 1234
+--   Admin  -> PIN 0166
 --   Server -> PIN 1111
 --   Kitchen -> PIN 2222
 -- Hashes below are bcrypt hashes of those PINs (cost factor 10).
 insert into staff (name, pin_hash, role) values
-  ('Manager', '$2b$10$8eBfdJ4iQyNTRX.e0dxJkOnL.73NrQzcl7ZDEv2fJ2ZsDYEuiKfIq', 'admin'),
+  ('Manager', '$2b$10$8Dl8QTHCqEwahXKHjY3mLu8KCJMX6AfG0gdt2vsmgZDPJv1SqTtO.', 'admin'),
   ('Server 1', '$2b$10$JC6FMvLNplDvw5RiriQzn.RnwTeEMUAxszmHL7tJhAq.BwrMrWzc6', 'server'),
   ('Kitchen 1', '$2b$10$zkzjjwQ4R3jjHFNFDJvHrOuNhVebACN7dYelGxA1GZjJ0lY0B/pXi', 'kitchen')
 on conflict do nothing;
 
--- 20 tables laid out in a simple grid for the floor plan (edit positions freely later from the admin screen).
-insert into restaurant_tables (label, seats, pos_x, pos_y)
+insert into floors (name, sort_order) values
+  ('Main Floor', 0)
+on conflict do nothing;
+
+-- 20 tables laid out in a simple grid on the Main Floor (edit freely later from the admin screen).
+insert into restaurant_tables (floor_id, label, seats, pos_x, pos_y)
 select
+  (select id from floors order by sort_order limit 1),
   (n)::text,
   case when n % 4 = 0 then 6 else 4 end,
   10 + ((n - 1) % 5) * 18,

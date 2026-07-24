@@ -30,21 +30,21 @@ function Ticket({ order, onBump }: { order: KitchenOrder; onBump: (status: Order
 
   return (
     <div
-      className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 ${
-        urgent ? "border-red-600 bg-red-950/30" : "border-neutral-800 bg-neutral-900"
+      className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 shadow-sm ${
+        urgent ? "border-red-400 bg-red-50" : "border-slate-200 bg-white"
       }`}
     >
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-lg font-semibold">Table {label}</span>
-        <span className={`text-sm ${urgent ? "text-red-400" : "text-neutral-500"}`}>{minutes}m</span>
+        <span className="text-lg font-semibold text-slate-900">Table {label}</span>
+        <span className={`text-sm ${urgent ? "text-red-600" : "text-slate-400"}`}>{minutes}m</span>
       </div>
       <div className="flex-1 space-y-1">
         {order.order_items
           .filter((i) => i.status !== "cancelled")
           .map((item) => (
             <div key={item.id} className="text-sm">
-              <span className="font-medium">{item.quantity}x {item.name_snapshot}</span>
-              {item.note && <span className="block pl-4 text-xs text-amber-400">note: {item.note}</span>}
+              <span className="font-medium text-slate-900">{item.quantity}x {item.name_snapshot}</span>
+              {item.note && <span className="block pl-4 text-xs text-amber-600">note: {item.note}</span>}
             </div>
           ))}
       </div>
@@ -52,7 +52,7 @@ function Ticket({ order, onBump }: { order: KitchenOrder; onBump: (status: Order
         {order.status === "pending" && (
           <button
             onClick={() => onBump("ready")}
-            className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-medium"
+            className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Mark ready
           </button>
@@ -60,7 +60,7 @@ function Ticket({ order, onBump }: { order: KitchenOrder; onBump: (status: Order
         {order.status === "ready" && (
           <button
             onClick={() => onBump("served")}
-            className="flex-1 rounded-lg bg-neutral-700 py-2 text-sm font-medium"
+            className="flex-1 rounded-lg bg-slate-700 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
             Served / clear
           </button>
@@ -108,21 +108,21 @@ export function KitchenBoard({ initialOrders }: { initialOrders: KitchenOrder[] 
   return (
     <div className="flex flex-1 gap-6 overflow-x-auto p-6">
       <section className="flex-1">
-        <h2 className="mb-3 text-sm font-medium uppercase text-neutral-500">Preparing ({pending.length})</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Preparing ({pending.length})</h2>
         <div className="flex flex-wrap gap-4">
           {pending.map((o) => (
             <Ticket key={o.id} order={o} onBump={(s) => bump(o.id, s)} />
           ))}
-          {pending.length === 0 && <p className="text-sm text-neutral-600">No tickets in the queue.</p>}
+          {pending.length === 0 && <p className="text-sm text-slate-400">No tickets in the queue.</p>}
         </div>
       </section>
       <section className="flex-1">
-        <h2 className="mb-3 text-sm font-medium uppercase text-neutral-500">Ready for pickup ({ready.length})</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Ready for pickup ({ready.length})</h2>
         <div className="flex flex-wrap gap-4">
           {ready.map((o) => (
             <Ticket key={o.id} order={o} onBump={(s) => bump(o.id, s)} />
           ))}
-          {ready.length === 0 && <p className="text-sm text-neutral-600">Nothing waiting.</p>}
+          {ready.length === 0 && <p className="text-sm text-slate-400">Nothing waiting.</p>}
         </div>
       </section>
     </div>
