@@ -48,7 +48,10 @@ alter table tabs alter column status set default 'seated';
 alter table tabs add column if not exists adjustment numeric(10, 2) not null default 0;
 alter table tabs add column if not exists adjustment_note text;
 
-create or replace view tab_totals as
+-- The original view only had (tab_id, total); CREATE OR REPLACE can't
+-- reshape existing column names/order, so drop it first.
+drop view if exists tab_totals;
+create view tab_totals as
 select
   t.id as tab_id,
   t.status,
