@@ -40,6 +40,8 @@ export interface Tab {
   opened_at: string;
   closed_at: string | null;
   payment_method: PaymentMethod | null;
+  adjustment: number;
+  adjustment_note: string | null;
 }
 
 export interface MenuCategory {

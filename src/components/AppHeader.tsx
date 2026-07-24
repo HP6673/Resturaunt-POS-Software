@@ -9,6 +9,8 @@ const NAV: { href: string; label: string; roles: StaffRole[] }[] = [
   { href: "/kitchen", label: "Kitchen", roles: ["admin", "server", "kitchen"] },
   { href: "/admin/menu", label: "Menu", roles: ["admin"] },
   { href: "/admin/tables", label: "Floor plan", roles: ["admin"] },
+  { href: "/admin/staff", label: "Staff", roles: ["admin"] },
+  { href: "/admin/reports", label: "Reports", roles: ["admin"] },
 ];
 
 export function AppHeader({ name, role }: { name: string; role: StaffRole }) {

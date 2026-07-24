@@ -116,6 +116,17 @@ Every push to your main branch redeploys automatically.
 - **Floor plan** (`/admin/tables`, admin only) — switch or add floors/rooms,
   drag tables to reposition them, and click a table to edit its label, seat
   count, shape (square/round/rectangle), and size in pixels.
+- **Staff** (`/admin/staff`, admin only) — add employees with a name, role,
+  and 4-6 digit PIN (rejects duplicates), change role, reset a PIN, or
+  deactivate someone (you can't deactivate yourself). No hard deletes, so
+  order history stays intact.
+- **Reports** (`/admin/reports`, admin only) — revenue, tabs closed, and
+  average tab size over the last 24 hours / 7 days / 30 days / all time, plus
+  a top-selling-items table for the last 30 days.
+- **Bill adjustments** — from the Checkout dialog, admins can apply a comp or
+  discount (negative amount) or a surcharge (positive amount) with a note.
+  It's reflected in the tab's total everywhere immediately (POS, table board,
+  and later in Reports once the tab closes).
 
 ## Project structure
 
@@ -134,9 +145,10 @@ src/components/*           Client components (realtime UI)
 
 - No receipt or kitchen-printer integration — everything is on-screen (by
   design, for v1).
-- No sales reporting/analytics dashboard yet.
 - No split-check support (one running total per table).
 - Payment is "tracked," not processed — for real card payments you'd add
   Stripe (or similar) at checkout.
 - PIN login checks a PIN against every active staff member's hash (fine for a
   small staff; would need a rethink at large scale).
+- Reports use fixed windows (24h/7d/30d/all-time) rather than a custom date
+  picker.

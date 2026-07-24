@@ -35,5 +35,5 @@ export async function fetchOpenTabsSummary(): Promise<OpenTabSummary[]> {
     totals.set(order.tab_id, (totals.get(order.tab_id) ?? 0) + sum);
   }
 
-  return tabs.map((t) => ({ ...t, total: totals.get(t.id) ?? 0 }));
+  return tabs.map((t) => ({ ...t, total: (totals.get(t.id) ?? 0) + t.adjustment }));
 }

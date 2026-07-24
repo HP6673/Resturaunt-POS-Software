@@ -43,6 +43,7 @@ export default async function POSPage({
         categories={categories ?? []}
         menuItems={items ?? []}
         initialOrders={orders ?? []}
+        role={session.role}
       />
     </div>
   );

@@ -47,7 +47,9 @@ create table if not exists tabs (
   guest_count int not null default 1,
   opened_at timestamptz not null default now(),
   closed_at timestamptz,
-  payment_method text check (payment_method in ('cash', 'card', 'other'))
+  payment_method text check (payment_method in ('cash', 'card', 'other')),
+  adjustment numeric(10, 2) not null default 0, -- manual comp/discount, admin-only
+  adjustment_note text
 );
 
 create index if not exists idx_tabs_table_id on tabs(table_id);
@@ -98,11 +100,14 @@ create table if not exists order_items (
 
 create index if not exists idx_order_items_order_id on order_items(order_id);
 
--- ============ VIEW: running total per tab ============
+-- ============ VIEW: running total per tab (food/drink total + adjustment) ============
 create or replace view tab_totals as
 select
   t.id as tab_id,
-  coalesce(sum(oi.price_snapshot * oi.quantity) filter (where oi.status <> 'cancelled'), 0) as total
+  t.status,
+  t.closed_at,
+  t.adjustment,
+  coalesce(sum(oi.price_snapshot * oi.quantity) filter (where oi.status <> 'cancelled'), 0) + t.adjustment as total
 from tabs t
 left join orders o on o.tab_id = t.id and o.status <> 'cancelled'
 left join order_items oi on oi.order_id = o.id

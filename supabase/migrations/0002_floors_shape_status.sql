@@ -41,3 +41,19 @@ update tabs set status = 'seated' where status = 'open';
 alter table tabs drop constraint if exists tabs_status_check;
 alter table tabs add constraint tabs_status_check check (status in ('seated', 'ordered', 'eating', 'needs_payment', 'closed'));
 alter table tabs alter column status set default 'seated';
+
+-- Manual bill adjustments (comps/discounts), applied on top of the order total
+alter table tabs add column if not exists adjustment numeric(10, 2) not null default 0;
+alter table tabs add column if not exists adjustment_note text;
+
+create or replace view tab_totals as
+select
+  t.id as tab_id,
+  t.status,
+  t.closed_at,
+  t.adjustment,
+  coalesce(sum(oi.price_snapshot * oi.quantity) filter (where oi.status <> 'cancelled'), 0) + t.adjustment as total
+from tabs t
+left join orders o on o.tab_id = t.id and o.status <> 'cancelled'
+left join order_items oi on oi.order_id = o.id
+group by t.id;

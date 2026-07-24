@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import type { MenuCategory, MenuItem, Order, OrderItem, RestaurantTable, Tab } from "@/lib/types";
+import type { MenuCategory, MenuItem, Order, OrderItem, RestaurantTable, StaffRole, Tab } from "@/lib/types";
 
 type OrderWithItems = Order & { order_items: OrderItem[] };
 
@@ -36,12 +36,14 @@ export function POSView({
   categories,
   menuItems,
   initialOrders,
+  role,
 }: {
   tab: Tab;
   table: RestaurantTable | null;
   categories: MenuCategory[];
   menuItems: MenuItem[];
   initialOrders: OrderWithItems[];
+  role: StaffRole;
 }) {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState<string | "all">(categories[0]?.id ?? "all");
@@ -50,6 +52,12 @@ export function POSView({
   const [sending, setSending] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [tabStatus, setTabStatus] = useState(tab.status);
+  const [adjustment, setAdjustment] = useState(tab.adjustment);
+  const [adjustmentNote, setAdjustmentNote] = useState(tab.adjustment_note ?? "");
+  const [adjustmentInput, setAdjustmentInput] = useState(String(tab.adjustment));
+  const [adjustmentNoteInput, setAdjustmentNoteInput] = useState(tab.adjustment_note ?? "");
+  const [savingAdjustment, setSavingAdjustment] = useState(false);
 
   useEffect(() => {
     async function refetchOrders() {
@@ -65,6 +73,16 @@ export function POSView({
       .channel(`pos-tab-${tab.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, refetchOrders)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, refetchOrders)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "tabs", filter: `id=eq.${tab.id}` },
+        (payload) => {
+          const updated = payload.new as Tab;
+          setTabStatus(updated.status);
+          setAdjustment(updated.adjustment);
+          setAdjustmentNote(updated.adjustment_note ?? "");
+        },
+      )
       .subscribe();
 
     return () => {
@@ -91,6 +109,7 @@ export function POSView({
   );
 
   const cartTotal = cart.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const billTotal = firedTotal + adjustment;
 
   function addToCart(item: MenuItem) {
     setCart((prev) => {
@@ -144,6 +163,25 @@ export function POSView({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "needs_payment" }),
     });
+  }
+
+  async function saveAdjustment() {
+    const amount = parseFloat(adjustmentInput);
+    if (Number.isNaN(amount)) return;
+    setSavingAdjustment(true);
+    try {
+      const res = await fetch(`/api/tabs/${tab.id}/adjustment`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, note: adjustmentNoteInput }),
+      });
+      if (res.ok) {
+        setAdjustment(amount);
+        setAdjustmentNote(adjustmentNoteInput);
+      }
+    } finally {
+      setSavingAdjustment(false);
+    }
   }
 
   async function closeTab(paymentMethod: "cash" | "card" | "other") {
@@ -203,7 +241,7 @@ export function POSView({
       <div className="flex w-96 shrink-0 flex-col overflow-hidden bg-white">
         <div className="border-b border-slate-200 p-4">
           <h2 className="font-semibold text-slate-900">Table {table?.label ?? "?"}</h2>
-          <p className="text-xs text-slate-500">{tab.guest_count} guests · Tab {tab.status.replace("_", " ")}</p>
+          <p className="text-xs text-slate-500">{tab.guest_count} guests · Tab {tabStatus.replace("_", " ")}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -277,9 +315,20 @@ export function POSView({
               <span className="text-slate-900">${cartTotal.toFixed(2)}</span>
             </div>
           )}
+          {adjustment !== 0 && (
+            <div className="mb-3 flex justify-between text-sm">
+              <span className="text-slate-500">
+                {adjustment < 0 ? "Discount" : "Adjustment"}
+                {adjustmentNote && <span className="text-slate-400"> ({adjustmentNote})</span>}
+              </span>
+              <span className={adjustment < 0 ? "text-red-500" : "text-slate-900"}>
+                {adjustment < 0 ? "-" : ""}${Math.abs(adjustment).toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="mb-4 flex justify-between text-base font-semibold text-slate-900">
             <span>Total</span>
-            <span>${(firedTotal + cartTotal).toFixed(2)}</span>
+            <span>${(billTotal + cartTotal).toFixed(2)}</span>
           </div>
 
           <button
@@ -303,8 +352,44 @@ export function POSView({
           <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
             <h3 className="mb-1 text-lg font-semibold text-slate-900">Close tab · Table {table?.label}</h3>
             <p className="mb-4 text-sm text-slate-500">
-              Total due: <span className="text-slate-900">${firedTotal.toFixed(2)}</span>
+              Total due: <span className="text-slate-900">${billTotal.toFixed(2)}</span>
+              {adjustment !== 0 && (
+                <span className="text-slate-400">
+                  {" "}
+                  (includes {adjustment < 0 ? "-" : "+"}${Math.abs(adjustment).toFixed(2)} adjustment)
+                </span>
+              )}
             </p>
+
+            {role === "admin" && (
+              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-2 text-xs font-medium uppercase text-slate-500">Adjust total (comp / discount)</p>
+                <div className="flex gap-2">
+                  <input
+                    value={adjustmentInput}
+                    onChange={(e) => setAdjustmentInput(e.target.value)}
+                    placeholder="-5.00"
+                    inputMode="decimal"
+                    className="w-24 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                  />
+                  <input
+                    value={adjustmentNoteInput}
+                    onChange={(e) => setAdjustmentNoteInput(e.target.value)}
+                    placeholder="reason"
+                    className="flex-1 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={saveAdjustment}
+                    disabled={savingAdjustment}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+                  >
+                    Apply
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">Negative = discount, positive = surcharge.</p>
+              </div>
+            )}
+
             <p className="mb-4 text-xs text-slate-500">
               This just records how the guest paid — no card is charged in-app.
             </p>
