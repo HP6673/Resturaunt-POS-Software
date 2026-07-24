@@ -43,11 +43,11 @@ create index if not exists idx_restaurant_tables_floor_id on restaurant_tables(f
 
 -- ============ TABS (a seated party's running bill) ============
 -- No row = table is EMPTY. A tab's status then tracks it through the rest of the visit:
---   seated -> ordered -> eating -> needs_payment -> closed (closed tabs no longer count as "open")
+--   seated -> ordered -> eating -> closed (closed tabs no longer count as "open")
 create table if not exists tabs (
   id uuid primary key default gen_random_uuid(),
   table_id uuid not null references restaurant_tables(id) on delete cascade,
-  status text not null default 'seated' check (status in ('seated', 'ordered', 'eating', 'needs_payment', 'closed')),
+  status text not null default 'seated' check (status in ('seated', 'ordered', 'eating', 'closed')),
   server_id uuid references staff(id) on delete set null,
   guest_count int not null default 1,
   opened_at timestamptz not null default now(),

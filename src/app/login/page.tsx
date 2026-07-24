@@ -71,8 +71,7 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 text-slate-900">
-      <h1 className="mb-1 text-2xl font-semibold">Restaurant POS</h1>
-      <p className="mb-8 text-sm text-slate-500">Enter your staff PIN</p>
+      <h1 className="mb-8 text-2xl font-semibold">Enter your staff PIN</h1>
 
       <div className="mb-6 flex h-14 w-56 items-center justify-center gap-3 rounded-lg border border-slate-200 bg-white shadow-sm">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -90,26 +89,26 @@ function LoginForm() {
           <button
             key={d}
             onClick={() => press(d)}
-            className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 active:bg-slate-200"
+            className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 transition-shadow hover:bg-slate-100 hover:shadow-md active:bg-slate-200 active:shadow-sm"
           >
             {d}
           </button>
         ))}
         <button
           onClick={clear}
-          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100"
+          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200 transition-shadow hover:bg-slate-100 hover:shadow-md"
         >
           Clear
         </button>
         <button
           onClick={() => press("0")}
-          className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100 active:bg-slate-200"
+          className="h-16 w-16 rounded-xl bg-white text-xl font-medium text-slate-900 shadow-sm ring-1 ring-slate-200 transition-shadow hover:bg-slate-100 hover:shadow-md active:bg-slate-200 active:shadow-sm"
         >
           0
         </button>
         <button
           onClick={backspace}
-          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 ring-1 ring-slate-200 hover:bg-slate-100"
+          className="h-16 w-16 rounded-xl bg-slate-50 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200 transition-shadow hover:bg-slate-100 hover:shadow-md"
         >
           ⌫
         </button>
@@ -118,7 +117,7 @@ function LoginForm() {
       <button
         disabled={pin.length === 0 || loading}
         onClick={() => submit(pin)}
-        className="mt-8 w-56 rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+        className="mt-8 w-56 rounded-lg bg-blue-600 py-3 font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
       >
         {loading ? "Checking..." : "Log in"}
       </button>

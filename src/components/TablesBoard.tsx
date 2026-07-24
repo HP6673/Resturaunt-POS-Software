@@ -11,7 +11,6 @@ const STATUS_STYLE: Record<"empty" | TabStatus, string> = {
   seated: "bg-sky-50 border-sky-400 hover:bg-sky-100",
   ordered: "bg-amber-50 border-amber-400 hover:bg-amber-100",
   eating: "bg-emerald-50 border-emerald-400 hover:bg-emerald-100",
-  needs_payment: "bg-rose-50 border-rose-400 hover:bg-rose-100",
   closed: "bg-white border-slate-200 hover:bg-slate-50",
 };
 
@@ -20,7 +19,6 @@ const STATUS_LABEL: Record<"empty" | TabStatus, string> = {
   seated: "Seated",
   ordered: "Ordered",
   eating: "Eating",
-  needs_payment: "Payment",
   closed: "Empty",
 };
 
@@ -29,7 +27,6 @@ const STATUS_DOT: Record<"empty" | TabStatus, string> = {
   seated: "border-sky-400 bg-sky-50",
   ordered: "border-amber-400 bg-amber-50",
   eating: "border-emerald-400 bg-emerald-50",
-  needs_payment: "border-rose-400 bg-rose-50",
   closed: "border-slate-200 bg-white",
 };
 
@@ -113,8 +110,10 @@ export function TablesBoard({
             <button
               key={floor.id}
               onClick={() => setActiveFloor(floor.id)}
-              className={`rounded-full px-3 py-1.5 text-sm ${
-                activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+              className={`max-w-[10rem] truncate rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${
+                activeFloor === floor.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"
               }`}
             >
               {floor.name}
@@ -124,9 +123,9 @@ export function TablesBoard({
       )}
 
       <div className="mb-4 flex flex-wrap gap-4 text-xs text-slate-500">
-        {(["empty", "seated", "ordered", "eating", "needs_payment"] as const).map((s) => (
+        {(["empty", "seated", "ordered", "eating"] as const).map((s) => (
           <span key={s} className="flex items-center gap-1.5">
-            <span className={`h-3 w-3 rounded border ${STATUS_DOT[s]}`} /> {STATUS_LABEL[s]}
+            <span className={`h-3 w-3 shrink-0 rounded border ${STATUS_DOT[s]}`} /> {STATUS_LABEL[s]}
           </span>
         ))}
       </div>
@@ -136,6 +135,8 @@ export function TablesBoard({
           const tab = tabsByTable[table.id];
           const status = tab ? tab.status : "empty";
           const radius = table.shape === "round" ? "9999px" : "0.5rem";
+          const tiny = table.width < 64 || table.height < 64;
+          const compact = table.width < 90 || table.height < 90;
           return (
             <button
               key={table.id}
@@ -148,18 +149,22 @@ export function TablesBoard({
                 height: `${table.height}px`,
                 borderRadius: radius,
               }}
-              className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1 border p-2 text-sm shadow-sm transition-colors disabled:opacity-50 ${STATUS_STYLE[status]}`}
+              className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-0.5 overflow-hidden border p-1.5 text-sm shadow-sm transition-all hover:shadow-md disabled:opacity-50 ${STATUS_STYLE[status]}`}
             >
-              <span className="text-base font-semibold text-slate-900">Table {table.label}</span>
-              <span className="text-xs text-slate-500">{table.seats} seats</span>
-              {tab && (
+              <span className="w-full truncate text-center text-base font-semibold text-slate-900">
+                {tiny ? table.label : `Table ${table.label}`}
+              </span>
+              {!tiny && !compact && <span className="w-full truncate text-center text-xs text-slate-500">{table.seats} seats</span>}
+              {tab && !tiny && (
                 <>
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                    {STATUS_LABEL[status]}
-                  </span>
-                  <span className="text-sm font-medium text-slate-900">${tab.total.toFixed(2)}</span>
-                  {tab.server_id && (
-                    <span className="text-[10px] text-slate-500">{staffNames[tab.server_id] ?? ""}</span>
+                  {!compact && (
+                    <span className="w-full truncate text-center text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      {STATUS_LABEL[status]}
+                    </span>
+                  )}
+                  <span className="w-full truncate text-center text-sm font-medium text-slate-900">${tab.total.toFixed(2)}</span>
+                  {tab.server_id && !compact && (
+                    <span className="w-full truncate text-center text-[10px] text-slate-500">{staffNames[tab.server_id] ?? ""}</span>
                   )}
                 </>
               )}

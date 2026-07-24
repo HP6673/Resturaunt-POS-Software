@@ -29,7 +29,7 @@ export interface RestaurantTable {
 }
 
 // No tab row at all = "empty" table. Otherwise the tab moves through this lifecycle.
-export type TabStatus = "seated" | "ordered" | "eating" | "needs_payment" | "closed";
+export type TabStatus = "seated" | "ordered" | "eating" | "closed";
 export type PaymentMethod = "cash" | "card" | "other";
 
 export interface Tab {

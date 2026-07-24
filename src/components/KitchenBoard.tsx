@@ -38,13 +38,13 @@ function Ticket({
 
   return (
     <div
-      className={`flex w-72 shrink-0 flex-col rounded-xl border p-3 shadow-sm ${
+      className={`flex w-72 shrink-0 flex-col overflow-hidden rounded-xl border p-3 shadow-sm transition-shadow hover:shadow-md ${
         urgent ? "border-red-400 bg-red-50" : "border-slate-200 bg-white"
       }`}
     >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-lg font-semibold text-slate-900">Table {label}</span>
-        <span className={`text-sm ${urgent ? "text-red-600" : "text-slate-400"}`}>{minutes}m</span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="truncate text-lg font-semibold text-slate-900">Table {label}</span>
+        <span className={`shrink-0 text-sm ${urgent ? "text-red-600" : "text-slate-400"}`}>{minutes}m</span>
       </div>
       <div className="flex-1 space-y-1">
         {order.order_items
@@ -52,18 +52,18 @@ function Ticket({
           .map((item) => (
             <div key={item.id} className="text-sm">
               <span className="font-medium text-slate-900">{item.quantity}x {item.name_snapshot}</span>
-              {item.note && <span className="block pl-4 text-xs text-amber-600">note: {item.note}</span>}
+              {item.note && <span className="block truncate pl-4 text-xs text-amber-600">note: {item.note}</span>}
             </div>
           ))}
       </div>
-      <label className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+      <label className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-shadow hover:bg-slate-50 hover:shadow-md">
         <input
           type="checkbox"
           checked={false}
           onChange={onCheck}
-          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
         />
-        {actionLabel}
+        <span className="truncate">{actionLabel}</span>
       </label>
     </div>
   );

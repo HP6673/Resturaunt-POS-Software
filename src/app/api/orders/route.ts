@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     .from("tabs")
     .update({ status: "ordered", status_changed_at: new Date().toISOString() })
     .eq("id", tabId)
-    .in("status", ["seated", "ordered", "eating", "needs_payment"])
+    .in("status", ["seated", "ordered", "eating"])
     .neq("status", "ordered");
 
   return NextResponse.json({ id: order.id });

@@ -124,12 +124,12 @@ export function StaffAdmin({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Name"
-              className="col-span-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500 sm:col-span-1"
+              className="col-span-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500 sm:col-span-1"
             />
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as StaffRole)}
-              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             >
               <option value="server">Server</option>
               <option value="kitchen">Kitchen</option>
@@ -140,21 +140,21 @@ export function StaffAdmin({
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="6-digit PIN"
               inputMode="numeric"
-              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             />
             <input
               value={pinConfirm}
               onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="Confirm PIN"
               inputMode="numeric"
-              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+              className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             />
           </div>
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           <button
             onClick={addStaff}
             disabled={saving}
-            className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+            className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
           >
             Add employee
           </button>
@@ -164,20 +164,20 @@ export function StaffAdmin({
           <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Employees</h2>
           <div className="space-y-2">
             {staff.map((member) => (
-              <div key={member.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+              <div key={member.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
                 <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className={`font-medium ${!member.active ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                  <div className="min-w-0">
+                    <p className={`truncate font-medium ${!member.active ? "text-slate-400 line-through" : "text-slate-900"}`}>
                       {member.name}
                       {member.id === currentStaffId && <span className="ml-2 text-xs text-blue-600">(you)</span>}
                     </p>
-                    <p className="font-mono text-xs text-slate-400">PIN {member.pin}</p>
+                    <p className="truncate font-mono text-xs text-slate-400">PIN {member.pin}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <select
                       value={member.role}
                       onChange={(e) => changeRole(member, e.target.value as StaffRole)}
-                      className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                      className="rounded-lg bg-slate-50 px-2 py-1 text-xs text-slate-700 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                     >
                       <option value="server">Server</option>
                       <option value="kitchen">Kitchen</option>
@@ -190,14 +190,14 @@ export function StaffAdmin({
                         setRowError(null);
                         setRowErrorId(null);
                       }}
-                      className="rounded-full px-3 py-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      className="rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 shadow-sm transition-shadow hover:bg-blue-100 hover:shadow"
                     >
                       Reset PIN
                     </button>
                     <button
                       onClick={() => toggleActive(member)}
                       disabled={member.id === currentStaffId}
-                      className={`rounded-full px-3 py-1 text-xs disabled:opacity-40 ${
+                      className={`rounded-full px-3 py-1 text-xs shadow-sm transition-shadow hover:shadow disabled:opacity-40 disabled:shadow-none ${
                         member.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
                       }`}
                     >
@@ -206,7 +206,7 @@ export function StaffAdmin({
                     <button
                       onClick={() => deleteStaff(member)}
                       disabled={member.id === currentStaffId}
-                      className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600 hover:bg-red-100 disabled:opacity-40"
+                      className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600 shadow-sm transition-shadow hover:bg-red-100 hover:shadow disabled:opacity-40 disabled:shadow-none"
                     >
                       Delete
                     </button>
@@ -222,11 +222,11 @@ export function StaffAdmin({
                       onChange={(e) => setResetPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                       placeholder="New 6-digit PIN"
                       inputMode="numeric"
-                      className="w-32 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                      className="w-32 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                     />
                     <button
                       onClick={() => submitResetPin(member.id)}
-                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                      className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md"
                     >
                       Save
                     </button>

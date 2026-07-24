@@ -26,33 +26,32 @@ export function AppHeader({ name, role }: { name: string; role: StaffRole }) {
   const links = NAV.filter((item) => item.roles.includes(role));
 
   return (
-    <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900">
-      <div className="flex items-center gap-6">
-        <span className="font-semibold tracking-tight text-blue-700">Restaurant POS</span>
-        <nav className="flex gap-1">
-          {links.map((item) => {
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-md px-3 py-1.5 text-sm ${
-                  active ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+    <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm">
+      <nav className="flex gap-1">
+        {links.map((item) => {
+          const active = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-md px-3 py-1.5 text-sm transition-all ${
+                active
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-500 hover:bg-blue-50 hover:text-blue-700 hover:shadow-sm"
+              }`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-slate-500">
+        <span className="truncate text-slate-500">
           {name} · <span className="uppercase text-slate-400">{role}</span>
         </span>
         <button
           onClick={logout}
-          className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-600 hover:bg-slate-100"
+          className="rounded-md border border-slate-200 px-3 py-1.5 text-slate-600 shadow-sm transition-shadow hover:bg-slate-100 hover:shadow"
         >
           Log out
         </button>

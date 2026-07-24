@@ -156,13 +156,8 @@ export function POSView({
     }
   }
 
-  async function openCheckout() {
+  function openCheckout() {
     setShowCheckout(true);
-    await fetch(`/api/tabs/${tab.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "needs_payment" }),
-    });
   }
 
   async function saveAdjustment() {
@@ -205,7 +200,7 @@ export function POSView({
         <div className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"}`}
           >
             All
           </button>
@@ -213,7 +208,7 @@ export function POSView({
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
+              className={`shrink-0 truncate rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"}`}
             >
               {c.name}
             </button>
@@ -224,10 +219,10 @@ export function POSView({
             <button
               key={item.id}
               onClick={() => addToCart(item)}
-              className="flex flex-col items-start gap-1 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm hover:border-blue-400 hover:bg-blue-50"
+              className="flex flex-col items-start gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-shadow hover:border-blue-400 hover:bg-blue-50 hover:shadow-md"
             >
-              <span className="font-medium text-slate-900">{item.name}</span>
-              {item.description && <span className="text-xs text-slate-500">{item.description}</span>}
+              <span className="w-full truncate font-medium text-slate-900">{item.name}</span>
+              {item.description && <span className="w-full truncate text-xs text-slate-500">{item.description}</span>}
               <span className="mt-1 text-sm text-blue-600">${item.price.toFixed(2)}</span>
             </button>
           ))}
@@ -240,8 +235,8 @@ export function POSView({
       {/* Ticket / cart */}
       <div className="flex w-96 shrink-0 flex-col overflow-hidden bg-white">
         <div className="border-b border-slate-200 p-4">
-          <h2 className="font-semibold text-slate-900">Table {table?.label ?? "?"}</h2>
-          <p className="text-xs text-slate-500">{tab.guest_count} guests · Tab {tabStatus.replace("_", " ")}</p>
+          <h2 className="truncate font-semibold text-slate-900">Table {table?.label ?? "?"}</h2>
+          <p className="truncate text-xs text-slate-500">{tab.guest_count} guests · Tab {tabStatus.replace("_", " ")}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -251,14 +246,14 @@ export function POSView({
               {orders
                 .filter((o) => o.status !== "cancelled")
                 .map((order) => (
-                  <div key={order.id} className="rounded-lg border border-slate-200 p-2 text-sm">
+                  <div key={order.id} className="rounded-lg border border-slate-200 p-2 text-sm shadow-sm">
                     {order.order_items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between py-0.5">
-                        <span className="text-slate-900">
+                      <div key={item.id} className="flex items-center justify-between gap-2 py-0.5">
+                        <span className="min-w-0 truncate text-slate-900">
                           {item.quantity}x {item.name_snapshot}
                           {item.note && <span className="text-slate-500"> ({item.note})</span>}
                         </span>
-                        <span className={STATUS_COLOR[item.status]}>{STATUS_LABEL[item.status]}</span>
+                        <span className={`shrink-0 ${STATUS_COLOR[item.status]}`}>{STATUS_LABEL[item.status]}</span>
                       </div>
                     ))}
                   </div>
@@ -270,22 +265,22 @@ export function POSView({
           {cart.length === 0 && <p className="mt-2 text-sm text-slate-400">Tap menu items to add them.</p>}
           <div className="mt-2 space-y-2">
             {cart.map((line) => (
-              <div key={line.key} className="rounded-lg border border-slate-200 p-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-900">{line.name}</span>
-                  <span className="text-sm text-slate-900">${(line.price * line.quantity).toFixed(2)}</span>
+              <div key={line.key} className="rounded-lg border border-slate-200 p-2 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-sm font-medium text-slate-900">{line.name}</span>
+                  <span className="shrink-0 text-sm text-slate-900">${(line.price * line.quantity).toFixed(2)}</span>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
                   <button
                     onClick={() => updateLine(line.key, { quantity: Math.max(1, line.quantity - 1) })}
-                    className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
+                    className="h-6 w-6 shrink-0 rounded bg-slate-100 text-sm text-slate-700 shadow-sm hover:bg-slate-200"
                   >
                     -
                   </button>
-                  <span className="w-4 text-center text-sm text-slate-900">{line.quantity}</span>
+                  <span className="w-4 shrink-0 text-center text-sm text-slate-900">{line.quantity}</span>
                   <button
                     onClick={() => updateLine(line.key, { quantity: line.quantity + 1 })}
-                    className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
+                    className="h-6 w-6 shrink-0 rounded bg-slate-100 text-sm text-slate-700 shadow-sm hover:bg-slate-200"
                   >
                     +
                   </button>
@@ -293,9 +288,9 @@ export function POSView({
                     value={line.note}
                     onChange={(e) => updateLine(line.key, { note: e.target.value })}
                     placeholder="note e.g. no onions"
-                    className="ml-1 flex-1 rounded bg-slate-50 px-2 py-1 text-xs text-slate-900 outline-none ring-1 ring-slate-200 focus:ring-blue-500"
+                    className="ml-1 min-w-0 flex-1 rounded bg-slate-50 px-2 py-1 text-xs text-slate-900 outline-none ring-1 ring-slate-200 focus:ring-blue-500"
                   />
-                  <button onClick={() => removeLine(line.key)} className="text-xs text-red-500 hover:text-red-600">
+                  <button onClick={() => removeLine(line.key)} className="shrink-0 text-xs text-red-500 hover:text-red-600">
                     remove
                   </button>
                 </div>
@@ -334,13 +329,13 @@ export function POSView({
           <button
             disabled={cart.length === 0 || sending}
             onClick={sendToKitchen}
-            className="mb-2 w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+            className="mb-2 w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
           >
             {sending ? "Sending..." : "Send to kitchen"}
           </button>
           <button
             onClick={openCheckout}
-            className="w-full rounded-lg border border-slate-300 py-2.5 font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full rounded-lg border border-slate-300 py-2.5 font-medium text-slate-700 shadow-sm transition-shadow hover:bg-slate-50 hover:shadow-md"
           >
             Checkout
           </button>
@@ -350,7 +345,7 @@ export function POSView({
       {showCheckout && (
         <div className="fixed inset-0 flex items-center justify-center bg-slate-900/40 p-4">
           <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
-            <h3 className="mb-1 text-lg font-semibold text-slate-900">Close tab · Table {table?.label}</h3>
+            <h3 className="mb-1 truncate text-lg font-semibold text-slate-900">Close tab · Table {table?.label}</h3>
             <p className="mb-4 text-sm text-slate-500">
               Total due: <span className="text-slate-900">${billTotal.toFixed(2)}</span>
               {adjustment !== 0 && (
@@ -370,18 +365,18 @@ export function POSView({
                     onChange={(e) => setAdjustmentInput(e.target.value)}
                     placeholder="-5.00"
                     inputMode="decimal"
-                    className="w-24 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                    className="w-24 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                   />
                   <input
                     value={adjustmentNoteInput}
                     onChange={(e) => setAdjustmentNoteInput(e.target.value)}
                     placeholder="reason"
-                    className="flex-1 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                    className="min-w-0 flex-1 rounded-lg bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                   />
                   <button
                     onClick={saveAdjustment}
                     disabled={savingAdjustment}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
                   >
                     Apply
                   </button>
@@ -399,7 +394,7 @@ export function POSView({
                   key={method}
                   disabled={closing}
                   onClick={() => closeTab(method)}
-                  className="rounded-lg border border-slate-300 py-2 text-sm capitalize text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                  className="rounded-lg border border-slate-300 py-2 text-sm capitalize text-slate-700 shadow-sm transition-shadow hover:bg-slate-50 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
                 >
                   {method}
                 </button>

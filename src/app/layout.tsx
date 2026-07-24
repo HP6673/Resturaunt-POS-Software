@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Restaurant POS",
+  title: "Staff Portal",
   description: "Order entry, kitchen tickets, and table tracking",
 };
 

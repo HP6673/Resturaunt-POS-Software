@@ -7,9 +7,10 @@ interface EditForm {
   label: string;
   seats: string;
   shape: TableShape;
-  width: string;
-  height: string;
 }
+
+const MIN_SIZE = 48;
+const MAX_SIZE = 400;
 
 export function FloorPlanEditor({
   initialFloors,
@@ -30,13 +31,26 @@ export function FloorPlanEditor({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
   const [addTableError, setAddTableError] = useState<string | null>(null);
+  const [resizeId, setResizeId] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
   function clamp(v: number) {
     return Math.min(95, Math.max(3, v));
   }
 
+  function clampSize(v: number) {
+    return Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(v)));
+  }
+
   function onPointerMove(e: React.PointerEvent) {
+    if (resizeId && resizeStartRef.current) {
+      const start = resizeStartRef.current;
+      const width = clampSize(start.width + (e.clientX - start.x));
+      const height = clampSize(start.height + (e.clientY - start.y));
+      setTables((prev) => prev.map((t) => (t.id === resizeId ? { ...t, width, height } : t)));
+      return;
+    }
     if (!dragId || !boardRef.current) return;
     const rect = boardRef.current.getBoundingClientRect();
     const x = clamp(((e.clientX - rect.left) / rect.width) * 100);
@@ -45,6 +59,18 @@ export function FloorPlanEditor({
   }
 
   async function onPointerUp() {
+    if (resizeId) {
+      const table = tables.find((t) => t.id === resizeId);
+      setResizeId(null);
+      resizeStartRef.current = null;
+      if (!table) return;
+      await fetch(`/api/tables/${table.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ width: table.width, height: table.height }),
+      });
+      return;
+    }
     if (!dragId) return;
     const table = tables.find((t) => t.id === dragId);
     setDragId(null);
@@ -54,6 +80,12 @@ export function FloorPlanEditor({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ posX: table.pos_x, posY: table.pos_y }),
     });
+  }
+
+  function onResizeStart(e: React.PointerEvent, table: RestaurantTable) {
+    e.stopPropagation();
+    setResizeId(table.id);
+    resizeStartRef.current = { x: e.clientX, y: e.clientY, width: table.width, height: table.height };
   }
 
   async function addTable() {
@@ -139,26 +171,20 @@ export function FloorPlanEditor({
       label: table.label,
       seats: String(table.seats),
       shape: table.shape,
-      width: String(table.width),
-      height: String(table.height),
     });
   }
 
   async function saveEdit() {
     if (!editingId || !editForm) return;
     const seats = parseInt(editForm.seats, 10) || 1;
-    const width = parseInt(editForm.width, 10) || 96;
-    const height = parseInt(editForm.height, 10) || 96;
     setTables((prev) =>
-      prev.map((t) =>
-        t.id === editingId ? { ...t, label: editForm.label, seats, shape: editForm.shape, width, height } : t,
-      ),
+      prev.map((t) => (t.id === editingId ? { ...t, label: editForm.label, seats, shape: editForm.shape } : t)),
     );
     setEditingId(null);
     await fetch(`/api/tables/${editingId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: editForm.label, seats, shape: editForm.shape, width, height }),
+      body: JSON.stringify({ label: editForm.label, seats, shape: editForm.shape }),
     });
   }
 
@@ -171,8 +197,10 @@ export function FloorPlanEditor({
           <button
             key={floor.id}
             onClick={() => setActiveFloor(floor.id)}
-            className={`rounded-full px-3 py-1.5 text-sm ${
-              activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            className={`max-w-[10rem] truncate rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${
+              activeFloor === floor.id
+                ? "bg-blue-600 text-white"
+                : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"
             }`}
           >
             {floor.name}
@@ -182,12 +210,12 @@ export function FloorPlanEditor({
           value={newFloorName}
           onChange={(e) => setNewFloorName(e.target.value)}
           placeholder="New floor / room name"
-          className="w-44 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+          className="w-44 rounded-lg bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
         />
         <button
           onClick={addFloor}
           disabled={addingFloor}
-          className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-40"
+          className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm transition-shadow hover:bg-blue-50 hover:shadow-md disabled:opacity-40"
         >
           Add floor
         </button>
@@ -205,7 +233,7 @@ export function FloorPlanEditor({
           <input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            className="w-28 rounded-lg bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+            className="w-28 rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
           />
         </div>
         <div>
@@ -214,7 +242,7 @@ export function FloorPlanEditor({
             value={newSeats}
             onChange={(e) => setNewSeats(e.target.value)}
             type="number"
-            className="w-20 rounded-lg bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+            className="w-20 rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
           />
         </div>
         <div>
@@ -222,20 +250,25 @@ export function FloorPlanEditor({
           <select
             value={newShape}
             onChange={(e) => setNewShape(e.target.value as TableShape)}
-            className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+            className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
           >
             <option value="square">Square</option>
             <option value="round">Round</option>
             <option value="rectangle">Rectangle</option>
           </select>
         </div>
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button
+          type="submit"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md"
+        >
           Add table
         </button>
         {addTableError ? (
           <p className="ml-2 text-xs text-red-600">{addTableError}</p>
         ) : (
-          <p className="ml-2 text-xs text-slate-500">Drag to reposition. Click a table to edit its size/shape.</p>
+          <p className="ml-2 text-xs text-slate-500">
+            Drag to reposition, drag the corner handle to resize. Click a table to edit its label/seats/shape.
+          </p>
         )}
       </form>
 
@@ -258,10 +291,10 @@ export function FloorPlanEditor({
               height: `${table.height}px`,
               borderRadius: table.shape === "round" ? "9999px" : "0.5rem",
             }}
-            className="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-col items-center justify-center gap-1 border border-slate-200 bg-white p-2 text-sm shadow-sm active:cursor-grabbing"
+            className="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab flex-col items-center justify-center gap-1 overflow-hidden border border-slate-200 bg-white p-2 text-sm shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
           >
-            <span className="font-semibold text-slate-900">Table {table.label}</span>
-            <span className="text-xs text-slate-500">{table.seats} seats</span>
+            <span className="w-full truncate text-center font-semibold text-slate-900">Table {table.label}</span>
+            <span className="w-full truncate text-center text-xs text-slate-500">{table.seats} seats</span>
             <button
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
@@ -272,6 +305,12 @@ export function FloorPlanEditor({
             >
               remove
             </button>
+            <div
+              onPointerDown={(e) => onResizeStart(e, table)}
+              className="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize rounded-tl border-l border-t border-slate-300 bg-slate-100 hover:bg-blue-200"
+              style={{ borderBottomRightRadius: table.shape === "round" ? "9999px" : "0.375rem" }}
+              aria-label="Resize table"
+            />
           </div>
         ))}
         {visibleTables.length === 0 && (
@@ -289,7 +328,7 @@ export function FloorPlanEditor({
                 <input
                   value={editForm.label}
                   onChange={(e) => setEditForm((f) => f && { ...f, label: e.target.value })}
-                  className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                  className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                 />
               </div>
               <div className="flex gap-3">
@@ -299,7 +338,7 @@ export function FloorPlanEditor({
                     type="number"
                     value={editForm.seats}
                     onChange={(e) => setEditForm((f) => f && { ...f, seats: e.target.value })}
-                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex-1">
@@ -307,7 +346,7 @@ export function FloorPlanEditor({
                   <select
                     value={editForm.shape}
                     onChange={(e) => setEditForm((f) => f && { ...f, shape: e.target.value as TableShape })}
-                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
+                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                   >
                     <option value="square">Square</option>
                     <option value="round">Round</option>
@@ -315,37 +354,20 @@ export function FloorPlanEditor({
                   </select>
                 </div>
               </div>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs text-slate-500">Width (px)</label>
-                  <input
-                    type="number"
-                    value={editForm.width}
-                    onChange={(e) => setEditForm((f) => f && { ...f, width: e.target.value })}
-                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs text-slate-500">Height (px)</label>
-                  <input
-                    type="number"
-                    value={editForm.height}
-                    onChange={(e) => setEditForm((f) => f && { ...f, height: e.target.value })}
-                    className="w-full rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              <p className="text-xs text-slate-400">
+                To resize the table, close this dialog and drag the small handle in its bottom-right corner.
+              </p>
             </div>
             <div className="mt-5 flex gap-2">
               <button
                 onClick={saveEdit}
-                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md"
               >
                 Save
               </button>
               <button
                 onClick={() => setEditingId(null)}
-                className="flex-1 rounded-lg border border-slate-300 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                className="flex-1 rounded-lg border border-slate-300 py-2 text-sm text-slate-700 shadow-sm transition-shadow hover:bg-slate-50 hover:shadow-md"
               >
                 Cancel
               </button>

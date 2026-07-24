@@ -16,13 +16,12 @@ interface CartLine {
   note: string;
 }
 
-const STAGE_OPTIONS: TabStatus[] = ["seated", "ordered", "eating", "needs_payment"];
+const STAGE_OPTIONS: TabStatus[] = ["seated", "ordered", "eating"];
 
 const STAGE_LABEL: Record<TabStatus, string> = {
   seated: "Seated",
   ordered: "Ordered",
   eating: "Eating",
-  needs_payment: "Payment",
   closed: "Closed",
 };
 
@@ -221,21 +220,25 @@ export function TableDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
       <div className="flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-200 p-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Table {table.label}</h2>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4">
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-semibold text-slate-900">Table {table.label}</h2>
             {tab && (
-              <p className="text-xs text-slate-500">
+              <p className="truncate text-xs text-slate-500">
                 Open {elapsedLabel(tab.opened_at)} · In {STAGE_LABEL[tab.status]} for{" "}
                 {elapsedLabel(tab.status_changed_at)}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <Link href={`/pos/${tabId}`} className="text-sm text-blue-600 hover:underline">
               Open full ticket ↗
             </Link>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+            <button
+              onClick={onClose}
+              className="rounded-md px-2 py-1 text-slate-400 shadow-sm transition-shadow hover:bg-slate-100 hover:text-slate-600 hover:shadow"
+              aria-label="Close"
+            >
               ✕
             </button>
           </div>
@@ -255,10 +258,10 @@ export function TableDetailModal({
                       key={s}
                       disabled={stageSaving}
                       onClick={() => changeStage(s)}
-                      className={`rounded-full px-3 py-1 text-xs disabled:opacity-40 ${
+                      className={`rounded-full px-3 py-1 text-xs shadow-sm transition-all disabled:opacity-40 disabled:shadow-none ${
                         tab.status === s
                           ? "bg-blue-600 text-white"
-                          : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"
                       }`}
                     >
                       {STAGE_LABEL[s]}
@@ -277,21 +280,23 @@ export function TableDetailModal({
                   {orders
                     .filter((o) => o.status !== "cancelled")
                     .map((order) => (
-                      <div key={order.id} className="rounded-lg border border-slate-200 p-2 text-sm">
+                      <div key={order.id} className="rounded-lg border border-slate-200 p-2 text-sm shadow-sm">
                         {order.order_items.map((item) => (
                           <div key={item.id} className="py-1">
                             <div className="flex items-center justify-between gap-2">
-                              <span className={item.status === "cancelled" ? "text-slate-400 line-through" : "text-slate-900"}>
+                              <span
+                                className={`min-w-0 truncate ${item.status === "cancelled" ? "text-slate-400 line-through" : "text-slate-900"}`}
+                              >
                                 {item.quantity}x {item.name_snapshot}
                                 {item.note && <span className="text-slate-500"> ({item.note})</span>}
                               </span>
                               {editingItemId === item.id ? (
-                                <div className="flex items-center gap-1">
+                                <div className="flex shrink-0 items-center gap-1">
                                   <input
                                     value={editPrice}
                                     onChange={(e) => setEditPrice(e.target.value)}
                                     inputMode="decimal"
-                                    className="w-16 rounded border border-slate-200 px-1.5 py-0.5 text-xs"
+                                    className="w-16 rounded border border-slate-200 px-1.5 py-0.5 text-xs shadow-sm"
                                     autoFocus
                                   />
                                   <button onClick={() => savePrice(item)} className="text-xs text-blue-600 hover:underline">
@@ -299,7 +304,7 @@ export function TableDetailModal({
                                   </button>
                                 </div>
                               ) : (
-                                <span className="text-slate-900">${item.price_snapshot.toFixed(2)}</span>
+                                <span className="shrink-0 text-slate-900">${item.price_snapshot.toFixed(2)}</span>
                               )}
                             </div>
                             <div className="flex items-center gap-2 pl-4 text-[11px]">
@@ -333,26 +338,26 @@ export function TableDetailModal({
                     <p className="mb-2 mt-4 text-xs font-medium uppercase text-slate-500">New (not sent yet)</p>
                     <div className="space-y-2">
                       {cart.map((line) => (
-                        <div key={line.key} className="rounded-lg border border-slate-200 p-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-slate-900">{line.name}</span>
-                            <span className="text-sm text-slate-900">${(line.price * line.quantity).toFixed(2)}</span>
+                        <div key={line.key} className="rounded-lg border border-slate-200 p-2 shadow-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 truncate text-sm font-medium text-slate-900">{line.name}</span>
+                            <span className="shrink-0 text-sm text-slate-900">${(line.price * line.quantity).toFixed(2)}</span>
                           </div>
                           <div className="mt-1 flex items-center gap-2">
                             <button
                               onClick={() => updateLine(line.key, { quantity: Math.max(1, line.quantity - 1) })}
-                              className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
+                              className="h-6 w-6 shrink-0 rounded bg-slate-100 text-sm text-slate-700 shadow-sm hover:bg-slate-200"
                             >
                               -
                             </button>
-                            <span className="w-4 text-center text-sm text-slate-900">{line.quantity}</span>
+                            <span className="w-4 shrink-0 text-center text-sm text-slate-900">{line.quantity}</span>
                             <button
                               onClick={() => updateLine(line.key, { quantity: line.quantity + 1 })}
-                              className="h-6 w-6 rounded bg-slate-100 text-sm text-slate-700 hover:bg-slate-200"
+                              className="h-6 w-6 shrink-0 rounded bg-slate-100 text-sm text-slate-700 shadow-sm hover:bg-slate-200"
                             >
                               +
                             </button>
-                            <button onClick={() => removeLine(line.key)} className="ml-auto text-xs text-red-500 hover:text-red-600">
+                            <button onClick={() => removeLine(line.key)} className="ml-auto shrink-0 text-xs text-red-500 hover:text-red-600">
                               remove
                             </button>
                           </div>
@@ -387,7 +392,7 @@ export function TableDetailModal({
                 <button
                   disabled={cart.length === 0 || sending}
                   onClick={sendToKitchen}
-                  className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+                  className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white shadow-sm transition-shadow hover:bg-blue-700 hover:shadow-md disabled:opacity-40 disabled:shadow-none"
                 >
                   {sending ? "Sending..." : "Send to kitchen"}
                 </button>
@@ -399,7 +404,7 @@ export function TableDetailModal({
               <div className="flex gap-1 overflow-x-auto border-b border-slate-200 p-3">
                 <button
                   onClick={() => setActiveCategory("all")}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"}`}
                 >
                   All
                 </button>
@@ -407,7 +412,7 @@ export function TableDetailModal({
                   <button
                     key={c.id}
                     onClick={() => setActiveCategory(c.id)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
+                    className={`shrink-0 truncate rounded-full px-3 py-1.5 text-sm shadow-sm transition-all ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:shadow"}`}
                   >
                     {c.name}
                   </button>
@@ -418,9 +423,9 @@ export function TableDetailModal({
                   <button
                     key={item.id}
                     onClick={() => addToCart(item)}
-                    className="flex flex-col items-start gap-1 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm hover:border-blue-400 hover:bg-blue-50"
+                    className="flex flex-col items-start gap-1 overflow-hidden rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-shadow hover:border-blue-400 hover:bg-blue-50 hover:shadow-md"
                   >
-                    <span className="font-medium text-slate-900">{item.name}</span>
+                    <span className="w-full truncate font-medium text-slate-900">{item.name}</span>
                     <span className="text-sm text-blue-600">${item.price.toFixed(2)}</span>
                   </button>
                 ))}
