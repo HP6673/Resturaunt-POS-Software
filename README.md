@@ -10,11 +10,14 @@ built on Next.js + Supabase, deployed on Vercel's free tier.
 - **Supabase** — free hosted Postgres database. Also powers realtime updates,
   so when a server sends an order, it appears on the kitchen screen instantly,
   and when the kitchen marks an item ready, the table/POS screens update live.
-- **Staff auth** — PIN-based, not email/password. Staff PINs are bcrypt-hashed
-  in the `staff` table; a signed, httpOnly cookie (via `jose`) tracks who's
-  logged in and their role (`admin`, `server`, `kitchen`). This is *not*
-  Supabase Auth — it's a small custom layer suited to a shared tablet at a host
-  stand or kitchen pass.
+- **Staff auth** — PIN-based, not email/password. Staff PINs are 6 digits,
+  stored **encrypted** (not hashed) in the `staff` table using
+  `PIN_ENCRYPTION_KEY` (see `src/lib/pinCrypto.ts`) — deliberately reversible,
+  not one-way, so admins can view an employee's current PIN from
+  `/admin/staff`. A signed, httpOnly cookie (via `jose`) tracks who's logged in
+  and their role (`admin`, `server`, `kitchen`). This is *not* Supabase Auth —
+  it's a small custom layer suited to a shared tablet at a host stand or
+  kitchen pass.
 - **Roles**
   - `admin` — everything, plus Menu management and the Floor plan editor.
   - `server` — Tables, POS (order entry + checkout).
@@ -27,8 +30,8 @@ Next.js API routes in `src/app/api/*`, which use the Supabase **service role
 key** (server-only secret, bypasses Row Level Security). The browser only ever
 holds the public **anon key**, which is restricted by RLS to read-only access
 on operational tables (tables, tabs, orders, order_items, menu) — used for
-realtime subscriptions and live totals. The `staff` table (PIN hashes) has no
-anon access at all. See `supabase/schema.sql` for the exact policies.
+realtime subscriptions and live totals. The `staff` table (encrypted PINs) has
+no anon access at all. See `supabase/schema.sql` for the exact policies.
 
 This is a reasonable tradeoff for a small internal tool, but the anon key does
 ship in the browser bundle, so anyone with it could read (not write) your
@@ -46,12 +49,8 @@ writing RLS policies keyed off `auth.uid()`.
    creates all tables, RLS policies, realtime publications, and seeds:
    - A "Main Floor" with 20 demo tables
    - 4 menu categories with 8 sample items
-   - 3 demo staff logins (**change these PINs before real use**):
-     | Role    | PIN  |
-     |---------|------|
-     | admin   | 0166 |
-     | server  | 1111 |
-     | kitchen | 2222 |
+   - (Staff logins are seeded separately in step 3 below, since PINs need this
+     deployment's own encryption key.)
 3. In **Project Settings → API**, copy:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -61,10 +60,27 @@ writing RLS policies keyed off `auth.uid()`.
 ### 2. Configure environment variables
 
 Copy `.env.local.example` to `.env.local` and fill in the three Supabase
-values above, plus a random `SESSION_SECRET` (any long random string — e.g.
-run `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
+values above, plus a random `SESSION_SECRET` and `PIN_ENCRYPTION_KEY` (each a
+long random string — e.g. run
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+once per variable).
 
-### 3. Run locally
+### 3. Seed the demo staff logins
+
+```bash
+node --env-file=.env.local scripts/seed-staff.mjs
+```
+
+This creates 3 demo logins with PINs encrypted under your `PIN_ENCRYPTION_KEY`
+(**change these before real use** — via `/admin/staff` once logged in):
+
+| Role    | PIN    |
+|---------|--------|
+| admin   | 100166 |
+| server  | 111111 |
+| kitchen | 222222 |
+
+### 4. Run locally
 
 ```bash
 npm install
@@ -72,11 +88,16 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) — you'll land on the PIN
-pad. Log in with one of the demo PINs above.
+pad. Log in with one of the demo PINs above (works with the on-screen keypad
+or by typing on a physical keyboard).
 
 If you set up your Supabase project before floors/table-shape support was
 added, run [`supabase/migrations/0002_floors_shape_status.sql`](supabase/migrations/0002_floors_shape_status.sql)
-once in the SQL editor to bring an existing database up to date.
+once in the SQL editor to bring an existing database up to date. If you set it
+up before PIN encryption was added, run
+[`supabase/migrations/0003_pin_encryption.sql`](supabase/migrations/0003_pin_encryption.sql)
+once, then reset every existing employee's PIN from `/admin/staff` (old
+bcrypt-hashed PINs can't be recovered or decrypted).
 
 ## Deploying for free (GitHub + Vercel)
 
@@ -117,9 +138,11 @@ Every push to your main branch redeploys automatically.
   drag tables to reposition them, and click a table to edit its label, seat
   count, shape (square/round/rectangle), and size in pixels.
 - **Staff** (`/admin/staff`, admin only) — add employees with a name, role,
-  and 4-6 digit PIN (rejects duplicates), change role, reset a PIN, or
-  deactivate someone (you can't deactivate yourself). No hard deletes, so
-  order history stays intact.
+  and 6-digit PIN (rejects duplicates); each employee's current PIN is shown
+  in the list. Change role, reset a PIN, deactivate (you can't deactivate
+  yourself), or permanently delete an employee (you can't delete yourself
+  either) — deleting unlinks them from past orders/tabs rather than removing
+  that history.
 - **Reports** (`/admin/reports`, admin only) — revenue, tabs closed, and
   average tab size over the last 24 hours / 7 days / 30 days / all time, plus
   a top-selling-items table for the last 30 days.
@@ -141,6 +164,42 @@ src/app/{tables,pos,kitchen,admin}  Pages
 src/components/*           Client components (realtime UI)
 ```
 
+## Hosting a separate copy for another restaurant
+
+Each restaurant needs its **own** Supabase project (its own database) and its
+own Vercel project (its own environment variables). Since staff, tables,
+orders, and menu all live in one Supabase project per deployment, reusing the
+same Supabase project for two restaurants would mix their data together — so
+don't do that. Instead, spin up a fully independent copy per restaurant:
+
+1. **Duplicate the code.** On this repo's GitHub page, click **Use this
+   template** (or **Fork**) to create a brand-new repository for the new
+   restaurant — e.g. `resturaunt-pos-joes-diner`. Don't just push more
+   restaurants' data into this same repo/branch.
+2. **Create a new, separate Supabase project** for that restaurant (step 1 of
+   "One-time setup" above). Run [`supabase/schema.sql`](supabase/schema.sql)
+   in its SQL editor — this gives the new restaurant its own empty tables and
+   seed data, completely isolated from any other restaurant's data.
+3. **Create a new, separate Vercel project** and import the new repo (not the
+   original one). In its **Settings → Environment Variables**, set that
+   restaurant's own `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`, and freshly generated `SESSION_SECRET` and
+   `PIN_ENCRYPTION_KEY` values (never reuse these across restaurants — one
+   signs the login cookie, the other encrypts staff PINs).
+4. Run `node --env-file=.env.local scripts/seed-staff.mjs` once (locally,
+   pointed at the new restaurant's `.env.local`) to create its demo staff
+   logins.
+5. Deploy. That restaurant now has its own URL, its own database, and its own
+   staff logins, fully independent of every other copy.
+6. **Change the demo PINs immediately** after setup (see the table under
+   "One-time setup") — every fresh copy starts with the same default PINs
+   until you change them.
+
+Bug fixes or new features you make in one copy don't automatically appear in
+the others — each is its own repo/branch from this point on. If you want
+updates to propagate, keep this repo as the "template" and periodically merge
+its changes into each restaurant's fork.
+
 ## Known limitations / good next steps
 
 - No receipt or kitchen-printer integration — everything is on-screen (by
@@ -148,7 +207,12 @@ src/components/*           Client components (realtime UI)
 - No split-check support (one running total per table).
 - Payment is "tracked," not processed — for real card payments you'd add
   Stripe (or similar) at checkout.
-- PIN login checks a PIN against every active staff member's hash (fine for a
-  small staff; would need a rethink at large scale).
+- PIN login decrypts every active staff member's PIN to find a match (fine
+  for a small staff; would need a rethink at large scale).
+- Staff PINs are encrypted (reversible), not hashed, specifically so admins
+  can view them — a deliberate tradeoff given these are 6-digit codes for a
+  shared tablet, not real account passwords. If `PIN_ENCRYPTION_KEY` ever
+  leaks, all staff PINs are exposed; rotate it and reset every PIN if that
+  happens.
 - Reports use fixed windows (24h/7d/30d/all-time) rather than a custom date
   picker.

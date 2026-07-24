@@ -20,6 +20,7 @@ export function StaffAdmin({
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [resetPin, setResetPin] = useState("");
   const [rowError, setRowError] = useState<string | null>(null);
+  const [rowErrorId, setRowErrorId] = useState<string | null>(null);
 
   async function addStaff() {
     setError(null);
@@ -27,8 +28,8 @@ export function StaffAdmin({
       setError("Name is required");
       return;
     }
-    if (!/^\d{4,6}$/.test(pin)) {
-      setError("PIN must be 4-6 digits");
+    if (!/^\d{6}$/.test(pin)) {
+      setError("PIN must be exactly 6 digits");
       return;
     }
     if (pin !== pinConfirm) {
@@ -47,7 +48,7 @@ export function StaffAdmin({
         setError(data.error ?? "Failed to add employee");
         return;
       }
-      setStaff((prev) => [...prev, { id: data.id, name: data.name, role: data.role, active: data.active }]);
+      setStaff((prev) => [...prev, { id: data.id, name: data.name, role: data.role, active: data.active, pin }]);
       setName("");
       setPin("");
       setPinConfirm("");
@@ -66,6 +67,21 @@ export function StaffAdmin({
     });
   }
 
+  async function deleteStaff(member: Staff) {
+    if (member.id === currentStaffId) return;
+    if (!confirm(`Permanently delete ${member.name}? This can't be undone.`)) return;
+    setRowError(null);
+    setRowErrorId(null);
+    const res = await fetch(`/api/staff/${member.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setRowError(data.error ?? "Failed to delete employee");
+      setRowErrorId(member.id);
+      return;
+    }
+    setStaff((prev) => prev.filter((s) => s.id !== member.id));
+  }
+
   async function changeRole(member: Staff, newRole: StaffRole) {
     setStaff((prev) => prev.map((s) => (s.id === member.id ? { ...s, role: newRole } : s)));
     await fetch(`/api/staff/${member.id}`, {
@@ -77,8 +93,8 @@ export function StaffAdmin({
 
   async function submitResetPin(id: string) {
     setRowError(null);
-    if (!/^\d{4,6}$/.test(resetPin)) {
-      setRowError("PIN must be 4-6 digits");
+    if (!/^\d{6}$/.test(resetPin)) {
+      setRowError("PIN must be exactly 6 digits");
       return;
     }
     const res = await fetch(`/api/staff/${id}`, {
@@ -91,6 +107,7 @@ export function StaffAdmin({
       setRowError(data.error ?? "Failed to reset PIN");
       return;
     }
+    setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, pin: resetPin } : s)));
     setResettingId(null);
     setResetPin("");
   }
@@ -121,7 +138,7 @@ export function StaffAdmin({
             <input
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="PIN"
+              placeholder="6-digit PIN"
               inputMode="numeric"
               className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
             />
@@ -154,6 +171,7 @@ export function StaffAdmin({
                       {member.name}
                       {member.id === currentStaffId && <span className="ml-2 text-xs text-blue-600">(you)</span>}
                     </p>
+                    <p className="font-mono text-xs text-slate-400">PIN {member.pin}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <select
@@ -170,6 +188,7 @@ export function StaffAdmin({
                         setResettingId(resettingId === member.id ? null : member.id);
                         setResetPin("");
                         setRowError(null);
+                        setRowErrorId(null);
                       }}
                       className="rounded-full px-3 py-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100"
                     >
@@ -184,14 +203,24 @@ export function StaffAdmin({
                     >
                       {member.active ? "Active" : "Deactivated"}
                     </button>
+                    <button
+                      onClick={() => deleteStaff(member)}
+                      disabled={member.id === currentStaffId}
+                      className="rounded-full bg-red-50 px-3 py-1 text-xs text-red-600 hover:bg-red-100 disabled:opacity-40"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
+                {rowErrorId === member.id && resettingId !== member.id && (
+                  <p className="mt-2 text-sm text-red-600">{rowError}</p>
+                )}
                 {resettingId === member.id && (
                   <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3">
                     <input
                       value={resetPin}
                       onChange={(e) => setResetPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="New PIN"
+                      placeholder="New 6-digit PIN"
                       inputMode="numeric"
                       className="w-32 rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-900 ring-1 ring-slate-200 focus:outline-none focus:ring-blue-500"
                     />

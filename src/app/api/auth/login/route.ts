@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createSessionCookie } from "@/lib/session";
+import { decryptPin } from "@/lib/pinCrypto";
 
 export async function POST(request: NextRequest) {
   const { pin } = await request.json();
@@ -13,14 +13,20 @@ export async function POST(request: NextRequest) {
   const admin = supabaseAdmin();
   const { data: staffList, error } = await admin
     .from("staff")
-    .select("id, name, role, pin_hash, active")
+    .select("id, name, role, pin_encrypted, active")
     .eq("active", true);
 
   if (error) {
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 
-  const match = (staffList ?? []).find((s) => bcrypt.compareSync(pin, s.pin_hash));
+  const match = (staffList ?? []).find((s) => {
+    try {
+      return decryptPin(s.pin_encrypted) === pin;
+    } catch {
+      return false;
+    }
+  });
 
   if (!match) {
     return NextResponse.json({ error: "Invalid PIN" }, { status: 401 });

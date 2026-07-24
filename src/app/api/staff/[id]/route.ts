@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/requireRole";
+import { decryptPin, encryptPin } from "@/lib/pinCrypto";
 
 export async function PATCH(
   request: NextRequest,
@@ -26,15 +26,22 @@ export async function PATCH(
   }
 
   if (typeof body.pin === "string") {
-    if (!/^\d{4,6}$/.test(body.pin)) {
-      return NextResponse.json({ error: "PIN must be 4-6 digits" }, { status: 400 });
+    if (!/^\d{6}$/.test(body.pin)) {
+      return NextResponse.json({ error: "PIN must be exactly 6 digits" }, { status: 400 });
     }
-    const { data: staffList } = await admin.from("staff").select("id, pin_hash").eq("active", true);
-    const collides = (staffList ?? []).some((s) => s.id !== id && bcrypt.compareSync(body.pin, s.pin_hash));
+    const { data: staffList } = await admin.from("staff").select("id, pin_encrypted").eq("active", true);
+    const collides = (staffList ?? []).some((s) => {
+      if (s.id === id) return false;
+      try {
+        return decryptPin(s.pin_encrypted) === body.pin;
+      } catch {
+        return false;
+      }
+    });
     if (collides) {
       return NextResponse.json({ error: "That PIN is already in use — pick a different one" }, { status: 409 });
     }
-    update.pin_hash = bcrypt.hashSync(body.pin, 10);
+    update.pin_encrypted = encryptPin(body.pin);
   }
 
   if (Object.keys(update).length === 0) {
@@ -42,6 +49,28 @@ export async function PATCH(
   }
 
   const { error } = await admin.from("staff").update(update).eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireRole(["admin"]);
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+  if (id === auth.session.staffId) {
+    return NextResponse.json({ error: "You can't delete your own account" }, { status: 400 });
+  }
+
+  const admin = supabaseAdmin();
+  const { error } = await admin.from("staff").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -5,6 +5,7 @@ export interface Staff {
   name: string;
   role: StaffRole;
   active: boolean;
+  pin: string;
 }
 
 export type TableShape = "square" | "round" | "rectangle";

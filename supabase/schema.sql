@@ -4,10 +4,15 @@
 create extension if not exists "pgcrypto";
 
 -- ============ STAFF ============
+-- pin_encrypted holds a PIN encrypted (AES-256-GCM, reversible) rather than
+-- hashed, so admins can view an employee's current PIN from /admin/staff.
+-- Encryption/decryption happens in the Next.js server code (see
+-- src/lib/pinCrypto.ts) using the PIN_ENCRYPTION_KEY env var, which is unique
+-- per deployment — see scripts/seed-staff.mjs for how demo logins are seeded.
 create table if not exists staff (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  pin_hash text not null,
+  pin_encrypted text not null,
   role text not null check (role in ('admin', 'server', 'kitchen')),
   active boolean not null default true,
   created_at timestamptz not null default now()
@@ -146,16 +151,12 @@ alter publication supabase_realtime add table restaurant_tables;
 alter publication supabase_realtime add table menu_items;
 
 -- ============ SEED DATA ============
--- Demo staff PINs (change these after first login):
---   Admin  -> PIN 0166
---   Server -> PIN 1111
---   Kitchen -> PIN 2222
--- Hashes below are bcrypt hashes of those PINs (cost factor 10).
-insert into staff (name, pin_hash, role) values
-  ('Manager', '$2b$10$8Dl8QTHCqEwahXKHjY3mLu8KCJMX6AfG0gdt2vsmgZDPJv1SqTtO.', 'admin'),
-  ('Server 1', '$2b$10$JC6FMvLNplDvw5RiriQzn.RnwTeEMUAxszmHL7tJhAq.BwrMrWzc6', 'server'),
-  ('Kitchen 1', '$2b$10$zkzjjwQ4R3jjHFNFDJvHrOuNhVebACN7dYelGxA1GZjJ0lY0B/pXi', 'kitchen')
-on conflict do nothing;
+-- Demo staff logins aren't seeded here — pin_encrypted values depend on this
+-- deployment's own PIN_ENCRYPTION_KEY, so a static insert can't work across
+-- installs. After running this schema and setting up .env.local, run:
+--   node --env-file=.env.local scripts/seed-staff.mjs
+-- to create the 3 demo logins (admin/server/kitchen). Change those PINs
+-- before real use.
 
 insert into floors (name, sort_order) values
   ('Main Floor', 0)

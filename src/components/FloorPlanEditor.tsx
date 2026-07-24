@@ -29,6 +29,7 @@ export function FloorPlanEditor({
   const [addingFloor, setAddingFloor] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [addTableError, setAddTableError] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
   function clamp(v: number) {
@@ -56,22 +57,34 @@ export function FloorPlanEditor({
   }
 
   async function addTable() {
-    if (!newLabel.trim() || !activeFloor) return;
+    setAddTableError(null);
+    if (!newLabel.trim()) {
+      setAddTableError("Table label is required");
+      return;
+    }
+    if (!activeFloor) {
+      setAddTableError("Add a floor first");
+      return;
+    }
     const seats = parseInt(newSeats, 10) || 4;
-    const res = await fetch("/api/tables", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        floorId: activeFloor,
-        label: newLabel,
-        seats,
-        shape: newShape,
-        posX: 50,
-        posY: 50,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/tables", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          floorId: activeFloor,
+          label: newLabel,
+          seats,
+          shape: newShape,
+          posX: 50,
+          posY: 50,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAddTableError(data.error ?? "Failed to add table");
+        return;
+      }
       setTables((prev) => [
         ...prev,
         {
@@ -89,6 +102,8 @@ export function FloorPlanEditor({
       setNewLabel("");
       setNewSeats("4");
       setNewShape("square");
+    } catch {
+      setAddTableError("Failed to add table — check your connection");
     }
   }
 
@@ -178,7 +193,13 @@ export function FloorPlanEditor({
         </button>
       </div>
 
-      <div className="mb-4 flex flex-wrap items-end gap-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addTable();
+        }}
+        className="mb-4 flex flex-wrap items-end gap-2"
+      >
         <div>
           <label className="mb-1 block text-xs text-slate-500">Table label</label>
           <input
@@ -208,11 +229,15 @@ export function FloorPlanEditor({
             <option value="rectangle">Rectangle</option>
           </select>
         </div>
-        <button onClick={addTable} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
           Add table
         </button>
-        <p className="ml-2 text-xs text-slate-500">Drag to reposition. Click a table to edit its size/shape.</p>
-      </div>
+        {addTableError ? (
+          <p className="ml-2 text-xs text-red-600">{addTableError}</p>
+        ) : (
+          <p className="ml-2 text-xs text-slate-500">Drag to reposition. Click a table to edit its size/shape.</p>
+        )}
+      </form>
 
       <div
         ref={boardRef}

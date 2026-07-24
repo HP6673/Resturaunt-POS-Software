@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function LoginForm() {
   const router = useRouter();
@@ -50,6 +50,24 @@ function LoginForm() {
   function clear() {
     setPin("");
   }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (loading) return;
+      if (/^[0-9]$/.test(e.key)) {
+        press(e.key);
+      } else if (e.key === "Backspace") {
+        backspace();
+      } else if (e.key === "Escape") {
+        clear();
+      } else if (e.key === "Enter" && pin.length > 0) {
+        submit(pin);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pin, loading]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 text-slate-900">

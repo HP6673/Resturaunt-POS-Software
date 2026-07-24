@@ -17,7 +17,15 @@ function elapsedMinutes(iso: string) {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 }
 
-function Ticket({ order, onBump }: { order: KitchenOrder; onBump: (status: OrderStatus) => void }) {
+function Ticket({
+  order,
+  actionLabel,
+  onCheck,
+}: {
+  order: KitchenOrder;
+  actionLabel: string;
+  onCheck: () => void;
+}) {
   const [minutes, setMinutes] = useState(elapsedMinutes(order.created_at));
 
   useEffect(() => {
@@ -48,24 +56,15 @@ function Ticket({ order, onBump }: { order: KitchenOrder; onBump: (status: Order
             </div>
           ))}
       </div>
-      <div className="mt-3 flex gap-2">
-        {order.status === "pending" && (
-          <button
-            onClick={() => onBump("ready")}
-            className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Mark ready
-          </button>
-        )}
-        {order.status === "ready" && (
-          <button
-            onClick={() => onBump("served")}
-            className="flex-1 rounded-lg bg-slate-700 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Served / clear
-          </button>
-        )}
-      </div>
+      <label className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <input
+          type="checkbox"
+          checked={false}
+          onChange={onCheck}
+          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        />
+        {actionLabel}
+      </label>
     </div>
   );
 }
@@ -103,26 +102,26 @@ export function KitchenBoard({ initialOrders }: { initialOrders: KitchenOrder[] 
   }
 
   const pending = orders.filter((o) => o.status === "pending");
-  const ready = orders.filter((o) => o.status === "ready");
+  const completed = orders.filter((o) => o.status === "ready");
 
   return (
     <div className="flex flex-1 gap-6 overflow-x-auto p-6">
       <section className="flex-1">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Preparing ({pending.length})</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Pending ({pending.length})</h2>
         <div className="flex flex-wrap gap-4">
           {pending.map((o) => (
-            <Ticket key={o.id} order={o} onBump={(s) => bump(o.id, s)} />
+            <Ticket key={o.id} order={o} actionLabel="Mark complete" onCheck={() => bump(o.id, "ready")} />
           ))}
           {pending.length === 0 && <p className="text-sm text-slate-400">No tickets in the queue.</p>}
         </div>
       </section>
       <section className="flex-1">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Ready for pickup ({ready.length})</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">Completed ({completed.length})</h2>
         <div className="flex flex-wrap gap-4">
-          {ready.map((o) => (
-            <Ticket key={o.id} order={o} onBump={(s) => bump(o.id, s)} />
+          {completed.map((o) => (
+            <Ticket key={o.id} order={o} actionLabel="Clear ticket" onCheck={() => bump(o.id, "served")} />
           ))}
-          {ready.length === 0 && <p className="text-sm text-slate-400">Nothing waiting.</p>}
+          {completed.length === 0 && <p className="text-sm text-slate-400">Nothing here.</p>}
         </div>
       </section>
     </div>

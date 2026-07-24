@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/requireRole";
+import { decryptPin, encryptPin } from "@/lib/pinCrypto";
 
 export async function POST(request: NextRequest) {
   const auth = await requireRole(["admin"]);
@@ -15,23 +15,27 @@ export async function POST(request: NextRequest) {
   if (!["admin", "server", "kitchen"].includes(role)) {
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
-  if (!pin || typeof pin !== "string" || !/^\d{4,6}$/.test(pin)) {
-    return NextResponse.json({ error: "PIN must be 4-6 digits" }, { status: 400 });
+  if (!pin || typeof pin !== "string" || !/^\d{6}$/.test(pin)) {
+    return NextResponse.json({ error: "PIN must be exactly 6 digits" }, { status: 400 });
   }
 
   const admin = supabaseAdmin();
 
-  const { data: staffList } = await admin.from("staff").select("pin_hash").eq("active", true);
-  const collides = (staffList ?? []).some((s) => bcrypt.compareSync(pin, s.pin_hash));
+  const { data: staffList } = await admin.from("staff").select("pin_encrypted").eq("active", true);
+  const collides = (staffList ?? []).some((s) => {
+    try {
+      return decryptPin(s.pin_encrypted) === pin;
+    } catch {
+      return false;
+    }
+  });
   if (collides) {
     return NextResponse.json({ error: "That PIN is already in use — pick a different one" }, { status: 409 });
   }
 
-  const pinHash = bcrypt.hashSync(pin, 10);
-
   const { data, error } = await admin
     .from("staff")
-    .insert({ name: name.trim(), role, pin_hash: pinHash })
+    .insert({ name: name.trim(), role, pin_encrypted: encryptPin(pin) })
     .select("id, name, role, active")
     .single();
 
