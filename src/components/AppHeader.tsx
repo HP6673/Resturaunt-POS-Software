@@ -35,7 +35,7 @@ export function AppHeader({ name, role }: { name: string; role: StaffRole }) {
                 key={item.href}
                 href={item.href}
                 className={`rounded-md px-3 py-1.5 text-sm ${
-                  active ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  active ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
                 }`}
               >
                 {item.label}

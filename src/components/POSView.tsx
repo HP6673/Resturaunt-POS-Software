@@ -167,7 +167,7 @@ export function POSView({
         <div className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white p-3">
           <button
             onClick={() => setActiveCategory("all")}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === "all" ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
           >
             All
           </button>
@@ -175,7 +175,7 @@ export function POSView({
             <button
               key={c.id}
               onClick={() => setActiveCategory(c.id)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-sm ${activeCategory === c.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"}`}
             >
               {c.name}
             </button>

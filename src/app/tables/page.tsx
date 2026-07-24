@@ -18,7 +18,7 @@ export default async function TablesPage() {
   const staffNames = Object.fromEntries((staff ?? []).map((s) => [s.id, s.name]));
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900">
       <AppHeader name={session.name} role={session.role} />
       <TablesBoard floors={floors ?? []} tables={tables ?? []} staffNames={staffNames} />
     </div>

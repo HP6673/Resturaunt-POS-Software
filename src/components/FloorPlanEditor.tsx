@@ -157,7 +157,7 @@ export function FloorPlanEditor({
             key={floor.id}
             onClick={() => setActiveFloor(floor.id)}
             className={`rounded-full px-3 py-1.5 text-sm ${
-              activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
             }`}
           >
             {floor.name}
@@ -172,7 +172,7 @@ export function FloorPlanEditor({
         <button
           onClick={addFloor}
           disabled={addingFloor}
-          className="rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-300 disabled:opacity-40"
+          className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-40"
         >
           Add floor
         </button>
@@ -219,7 +219,7 @@ export function FloorPlanEditor({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
-        className="relative h-[70vh] min-h-[500px] w-full touch-none rounded-xl border border-slate-200 bg-slate-100/50"
+        className="relative h-[70vh] min-h-[500px] w-full touch-none rounded-xl border border-slate-200 bg-blue-50/40"
       >
         {visibleTables.map((table) => (
           <div

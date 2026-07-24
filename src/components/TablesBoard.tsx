@@ -108,7 +108,7 @@ export function TablesBoard({
               key={floor.id}
               onClick={() => setActiveFloor(floor.id)}
               className={`rounded-full px-3 py-1.5 text-sm ${
-                activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                activeFloor === floor.id ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
               }`}
             >
               {floor.name}
@@ -125,7 +125,7 @@ export function TablesBoard({
         ))}
       </div>
 
-      <div className="relative h-[70vh] min-h-[500px] w-full rounded-xl border border-slate-200 bg-slate-100/50">
+      <div className="relative h-[70vh] min-h-[500px] w-full rounded-xl border border-slate-200 bg-blue-50/40">
         {visibleTables.map((table) => {
           const tab = tabsByTable[table.id];
           const status = tab ? tab.status : "empty";
