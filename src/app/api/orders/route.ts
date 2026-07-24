@@ -54,9 +54,10 @@ export async function POST(request: NextRequest) {
   // (e.g. a dessert order fired while EATING bumps it back to ORDERED).
   await admin
     .from("tabs")
-    .update({ status: "ordered" })
+    .update({ status: "ordered", status_changed_at: new Date().toISOString() })
     .eq("id", tabId)
-    .in("status", ["seated", "ordered", "eating", "needs_payment"]);
+    .in("status", ["seated", "ordered", "eating", "needs_payment"])
+    .neq("status", "ordered");
 
   return NextResponse.json({ id: order.id });
 }

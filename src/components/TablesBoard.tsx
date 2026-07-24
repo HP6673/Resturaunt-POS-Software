@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { fetchOpenTabsSummary, type OpenTabSummary } from "@/lib/tabsSummary";
-import type { Floor, RestaurantTable, TabStatus } from "@/lib/types";
+import { TableDetailModal } from "@/components/TableDetailModal";
+import type { Floor, MenuCategory, MenuItem, RestaurantTable, StaffRole, TabStatus } from "@/lib/types";
 
 const STATUS_STYLE: Record<"empty" | TabStatus, string> = {
   empty: "bg-white border-slate-200 hover:bg-slate-50",
@@ -37,15 +37,21 @@ export function TablesBoard({
   floors,
   tables,
   staffNames,
+  categories,
+  menuItems,
+  role,
 }: {
   floors: Floor[];
   tables: RestaurantTable[];
   staffNames: Record<string, string>;
+  categories: MenuCategory[];
+  menuItems: MenuItem[];
+  role: StaffRole;
 }) {
-  const router = useRouter();
   const [activeFloor, setActiveFloor] = useState<string>(floors[0]?.id ?? "");
   const [tabsByTable, setTabsByTable] = useState<Record<string, OpenTabSummary>>({});
   const [busyTableId, setBusyTableId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ tabId: string; table: RestaurantTable } | null>(null);
   const loadingRef = useRef(false);
 
   async function refresh() {
@@ -78,7 +84,7 @@ export function TablesBoard({
   async function handleClick(table: RestaurantTable) {
     const existing = tabsByTable[table.id];
     if (existing) {
-      router.push(`/pos/${existing.id}`);
+      setSelected({ tabId: existing.id, table });
       return;
     }
     setBusyTableId(table.id);
@@ -90,7 +96,7 @@ export function TablesBoard({
       });
       const data = await res.json();
       if (res.ok) {
-        router.push(`/pos/${data.id}`);
+        setSelected({ tabId: data.id, table });
       }
     } finally {
       setBusyTableId(null);
@@ -164,6 +170,17 @@ export function TablesBoard({
           <p className="p-6 text-sm text-slate-400">No tables on this floor yet.</p>
         )}
       </div>
+
+      {selected && (
+        <TableDetailModal
+          tabId={selected.tabId}
+          table={selected.table}
+          categories={categories}
+          menuItems={menuItems}
+          role={role}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }

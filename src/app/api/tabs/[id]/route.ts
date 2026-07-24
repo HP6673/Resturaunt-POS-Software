@@ -17,7 +17,11 @@ export async function PATCH(
   }
 
   const admin = supabaseAdmin();
-  const { error } = await admin.from("tabs").update({ status }).eq("id", id);
+  const { error } = await admin
+    .from("tabs")
+    .update({ status, status_changed_at: new Date().toISOString() })
+    .eq("id", id)
+    .neq("status", status);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

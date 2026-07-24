@@ -51,6 +51,7 @@ create table if not exists tabs (
   server_id uuid references staff(id) on delete set null,
   guest_count int not null default 1,
   opened_at timestamptz not null default now(),
+  status_changed_at timestamptz not null default now(), -- for "time in this stage"
   closed_at timestamptz,
   payment_method text check (payment_method in ('cash', 'card', 'other')),
   adjustment numeric(10, 2) not null default 0, -- manual comp/discount, admin-only

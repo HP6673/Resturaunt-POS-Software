@@ -39,6 +39,7 @@ export interface Tab {
   server_id: string | null;
   guest_count: number;
   opened_at: string;
+  status_changed_at: string;
   closed_at: string | null;
   payment_method: PaymentMethod | null;
   adjustment: number;

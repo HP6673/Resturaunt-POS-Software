@@ -21,6 +21,7 @@ export async function POST(
     .from("tabs")
     .update({
       status: "closed",
+      status_changed_at: new Date().toISOString(),
       closed_at: new Date().toISOString(),
       payment_method: paymentMethod,
     })

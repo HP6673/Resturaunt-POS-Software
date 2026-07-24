@@ -9,18 +9,28 @@ export default async function TablesPage() {
   if (!session) redirect("/login");
 
   const admin = supabaseAdmin();
-  const [{ data: floors }, { data: tables }, { data: staff }] = await Promise.all([
-    admin.from("floors").select("*").order("sort_order"),
-    admin.from("restaurant_tables").select("*").order("label"),
-    admin.from("staff").select("id, name"),
-  ]);
+  const [{ data: floors }, { data: tables }, { data: staff }, { data: categories }, { data: menuItems }] =
+    await Promise.all([
+      admin.from("floors").select("*").order("sort_order"),
+      admin.from("restaurant_tables").select("*").order("label"),
+      admin.from("staff").select("id, name"),
+      admin.from("menu_categories").select("*").order("sort_order"),
+      admin.from("menu_items").select("*").order("sort_order"),
+    ]);
 
   const staffNames = Object.fromEntries((staff ?? []).map((s) => [s.id, s.name]));
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
       <AppHeader name={session.name} role={session.role} />
-      <TablesBoard floors={floors ?? []} tables={tables ?? []} staffNames={staffNames} />
+      <TablesBoard
+        floors={floors ?? []}
+        tables={tables ?? []}
+        staffNames={staffNames}
+        categories={categories ?? []}
+        menuItems={menuItems ?? []}
+        role={session.role}
+      />
     </div>
   );
 }

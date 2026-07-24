@@ -43,7 +43,7 @@ export async function PATCH(
   if (status === "served" && order) {
     await admin
       .from("tabs")
-      .update({ status: "eating" })
+      .update({ status: "eating", status_changed_at: new Date().toISOString() })
       .eq("id", order.tab_id)
       .in("status", ["seated", "ordered"]);
   }
