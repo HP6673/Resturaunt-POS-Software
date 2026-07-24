@@ -93,11 +93,16 @@ or by typing on a physical keyboard).
 
 If you set up your Supabase project before floors/table-shape support was
 added, run [`supabase/migrations/0002_floors_shape_status.sql`](supabase/migrations/0002_floors_shape_status.sql)
-once in the SQL editor to bring an existing database up to date. If you set it
-up before PIN encryption was added, run
+once in the SQL editor to bring an existing database up to date.
+
+If you set it up before PIN encryption was added: running
 [`supabase/migrations/0003_pin_encryption.sql`](supabase/migrations/0003_pin_encryption.sql)
-once, then reset every existing employee's PIN from `/admin/staff` (old
-bcrypt-hashed PINs can't be recovered or decrypted).
+immediately breaks every existing login (old bcrypt hashes can't be
+decrypted) — **including admin**, so nobody can use the in-app "Reset PIN"
+button afterward. Add `PIN_ENCRYPTION_KEY` to your env first, then run
+`node --env-file=.env.local scripts/reset-all-pins.mjs` right after the
+migration — it resets every existing employee's PIN directly (no login
+needed) and prints the new PINs to your terminal.
 
 ## Deploying for free (GitHub + Vercel)
 
