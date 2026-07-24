@@ -37,8 +37,10 @@ update restaurant_tables set floor_id = (select id from floors order by sort_ord
 alter table restaurant_tables alter column floor_id set not null;
 
 -- Richer table status: no tab row = EMPTY; otherwise seated / ordered / eating / needs_payment / closed
-update tabs set status = 'seated' where status = 'open';
+-- Constraint must be dropped before the data update below, since the old
+-- constraint (from the very first schema) doesn't allow 'seated' as a value.
 alter table tabs drop constraint if exists tabs_status_check;
+update tabs set status = 'seated' where status = 'open';
 alter table tabs add constraint tabs_status_check check (status in ('seated', 'ordered', 'eating', 'needs_payment', 'closed'));
 alter table tabs alter column status set default 'seated';
 
